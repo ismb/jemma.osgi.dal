@@ -1,6 +1,7 @@
 package org.energy_home.jemma.osgi.dal.impl;
 
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
+import org.energy_home.jemma.osgi.dal.ClusterFunctionFactory;
 import org.osgi.service.dal.DeviceException;
 import org.osgi.service.dal.OperationMetadata;
 import org.osgi.service.dal.PropertyMetadata;
@@ -40,44 +41,58 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 	}
 
 	@Override
-	public BooleanData getData() {
+	public BooleanData getData() throws DeviceException {
 		Boolean data=null;
 		try {
 			data=(Boolean)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "getOnOff", 
 						createParams(ONOFFCLUSTER, "getOnOff", new String[0]));
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new DeviceException(e.getMessage(),e.getCause());
 		}
-		if(data==null)
-			return null;
+		
 		return new BooleanData(System.currentTimeMillis(),null,data);
 	}
 
 	@Override
 	public void setData(boolean data) throws UnsupportedOperationException, IllegalStateException, DeviceException,
 			IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException("Unimplemented method");
 	}
 
 	@Override
 	public void reverse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
-		// TODO Auto-generated method stub
+		try {
+			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execToggle", 
+						createParams(ONOFFCLUSTER, "execToggle", new String[0]));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
 		
 	}
 
 	@Override
 	public void setTrue() throws UnsupportedOperationException, IllegalStateException, DeviceException {
-		// TODO Auto-generated method stub
+		try {
+			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOn", 
+						createParams(ONOFFCLUSTER, "execOn", new String[0]));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
 		
 	}
 
 	@Override
 	public void setFalse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
-		// TODO Auto-generated method stub
+		try {
+			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOff", 
+						createParams(ONOFFCLUSTER, "execOff", new String[0]));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
 		
 	}
+
+
 
 	
 }

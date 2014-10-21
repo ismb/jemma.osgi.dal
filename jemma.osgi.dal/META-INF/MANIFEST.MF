@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JEMMA DAL Adapter
+Bundle-SymbolicName: org.energy_home.jemma.osgi.dal
+Bundle-Version: 1.0.0.qualifier
+Import-Package: org.energy_home.jemma.ah.hac,
+ org.energy_home.jemma.ah.hac.lib.ext;version="3.4.0",
+ org.osgi.service.dal,
+ org.osgi.service.dal.functions,
+ org.osgi.service.dal.functions.data,
+ org.slf4j;version="1.7.7"
+Service-Component: OSGI-INF/JemmaDalAdapter.xml

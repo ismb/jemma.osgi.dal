@@ -22,8 +22,10 @@ import org.energy_home.jemma.osgi.dal.factories.EnergyMeterSimpleMeteringFactory
 import org.energy_home.jemma.osgi.dal.factories.TemperatureMeterThermostatFactory;
 import org.energy_home.jemma.osgi.dal.utils.IDConverters;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.dal.Device;
@@ -32,6 +34,7 @@ import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.FunctionEvent;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.osgi.service.event.EventConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,7 +115,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		
 		d.put(Device.SERVICE_DRIVER, "ZigBee");
 		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
-		d.put(Device.SERVICE_STATUS, "2");
+		d.put(Device.SERVICE_STATUS, Device.STATUS_PROCESSING);
 		devices.put(appliance.getPid(),FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
 				Device.class,
 				new JemmaDevice(),
@@ -143,9 +146,42 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		}
 	}
 
-	@Override
+	@Override 
 	public void notifyApplianceAvailabilityUpdated(IAppliance appliance) {
-		//TODO: add here status code change for registered device service		
+		
+		LOG.info("Appliance availability updated");
+		if(!appliance.isDriver())
+		{
+			//this is not a real appliance, nothing to do
+			return;
+		}
+		if(devices.containsKey(appliance.getPid()))
+		{
+			Dictionary d=new Hashtable();
+			
+			d.put(Device.SERVICE_DRIVER, "ZigBee");
+			d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
+			
+			if(appliance.isAvailable())
+			{
+				d.put(Device.SERVICE_STATUS, Device.STATUS_ONLINE);
+			}else{
+				d.put(Device.SERVICE_STATUS, Device.STATUS_OFFLINE);
+			}
+			//update service properties
+			ServiceRegistration reg=devices.get(appliance.getPid());
+			reg.setProperties(d);
+			
+			//inform the framework that the service have been modified
+			ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, reg.getReference());
+			Dictionary props = new Hashtable();
+		    props.put(EventConstants.EVENT, serviceEvent);
+		    props.put(EventConstants.SERVICE, serviceEvent.getServiceReference());
+		    props.put(EventConstants.SERVICE_PID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_PID));
+		    props.put(EventConstants.SERVICE_ID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_ID));
+		    props.put(EventConstants.SERVICE_OBJECTCLASS, serviceEvent.getServiceReference().getProperty(Constants.OBJECTCLASS)); 
+		    eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+		}
 	}
 
 	@Override

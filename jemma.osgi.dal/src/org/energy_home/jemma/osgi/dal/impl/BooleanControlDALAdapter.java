@@ -1,5 +1,7 @@
 package org.energy_home.jemma.osgi.dal.impl;
 
+import java.util.Map;
+
 import org.energy_home.jemma.ah.hac.IAttributeValue;
 import org.energy_home.jemma.ah.hac.lib.AttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
@@ -13,18 +15,19 @@ import org.osgi.service.dal.functions.data.BooleanData;
 
 /**
  * DAL function implementation for ZigBee OnOffServer
+ * 
  * @author Ivan Grimaldi (grimaldi@ismb.it)
  *
  */
-public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanControl{
+public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanControl {
 
-	private static String ONOFFCLUSTER="org.energy_home.jemma.ah.cluster.zigbee.general.OnOffServer";
-	
+	private static String ONOFFCLUSTER = "org.energy_home.jemma.ah.cluster.zigbee.general.OnOffServer";
+
 	public BooleanControlDALAdapter(String appliancePid,Integer endPointId,IAppliancesProxy appliancesProxy)
 	{
 		super(appliancePid,endPointId,appliancesProxy);
 	}
-	
+
 	@Override
 	public PropertyMetadata getPropertyMetadata(String propertyName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
@@ -45,15 +48,15 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 
 	@Override
 	public BooleanData getData() throws DeviceException {
-		Boolean data=null;
+		Boolean data = null;
 		try {
-			data=(Boolean)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "getOnOff", 
-						createParams(ONOFFCLUSTER, "getOnOff", new String[0]));
+			data = (Boolean) this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER,
+					"getOnOff", createParams(ONOFFCLUSTER, "getOnOff", new String[0]));
 		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(),e.getCause());
+			throw new DeviceException(e.getMessage(), e.getCause());
 		}
-		
-		return new BooleanData(System.currentTimeMillis(),null,data);
+
+		return new BooleanData(System.currentTimeMillis(), null, data);
 	}
 
 	@Override
@@ -65,42 +68,39 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 	@Override
 	public void reverse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		try {
-			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execToggle", 
-						createParams(ONOFFCLUSTER, "execToggle", new String[0]));
+			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execToggle",
+					createParams(ONOFFCLUSTER, "execToggle", new String[0]));
 		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(),e.getCause());
+			throw new DeviceException(e.getMessage(), e.getCause());
 		}
-		
+
 	}
 
 	@Override
 	public void setTrue() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		try {
-			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOn", 
-						createParams(ONOFFCLUSTER, "execOn", new String[0]));
+			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOn",
+					createParams(ONOFFCLUSTER, "execOn", new String[0]));
 		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(),e.getCause());
+			throw new DeviceException(e.getMessage(), e.getCause());
 		}
-		
+
 	}
 
 	@Override
 	public void setFalse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		try {
-			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOff", 
-						createParams(ONOFFCLUSTER, "execOff", new String[0]));
+			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOff",
+					createParams(ONOFFCLUSTER, "execOff", new String[0]));
 		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(),e.getCause());
+			throw new DeviceException(e.getMessage(), e.getCause());
 		}
-		
+
 	}
 
 	@Override
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue value) {
-		return new BooleanData(value.getTimestamp(),null,(boolean)value.getValue());
+		return new BooleanData(value.getTimestamp(), null, (boolean) value.getValue());
 	}
 
-
-
-	
 }

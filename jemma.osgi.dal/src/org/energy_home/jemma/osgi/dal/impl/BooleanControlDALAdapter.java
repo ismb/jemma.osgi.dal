@@ -1,8 +1,11 @@
 package org.energy_home.jemma.osgi.dal.impl;
 
+import org.energy_home.jemma.ah.hac.IAttributeValue;
+import org.energy_home.jemma.ah.hac.lib.AttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.ClusterFunctionFactory;
 import org.osgi.service.dal.DeviceException;
+import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.OperationMetadata;
 import org.osgi.service.dal.PropertyMetadata;
 import org.osgi.service.dal.functions.BooleanControl;
@@ -90,6 +93,11 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 			throw new DeviceException(e.getMessage(),e.getCause());
 		}
 		
+	}
+
+	@Override
+	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue value) {
+		return new BooleanData(value.getTimestamp(),null,(boolean)value.getValue());
 	}
 
 

@@ -2,9 +2,11 @@ package org.energy_home.jemma.osgi.dal;
 
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.energy_home.jemma.ah.hac.IAppliance;
 import org.energy_home.jemma.ah.hac.IApplianceDescriptor;
@@ -18,11 +20,16 @@ import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.factories.BooleanControlOnOffFactory;
 import org.energy_home.jemma.osgi.dal.factories.MeterSimpleMeteringFactory;
 import org.energy_home.jemma.osgi.dal.utils.IDConverters;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.dal.Device;
 import org.osgi.service.dal.Function;
+import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.FunctionEvent;
+import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,19 +40,27 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 
 	private IAppliancesProxy appliancesProxy;
 	private EventAdmin eventAdmin;
+	
 	private static final Logger LOG = LoggerFactory.getLogger( ZigBeeDalAdapter.class );
 	
-	List<ServiceRegistration> functions;
-	List<ServiceRegistration> devices;
+	private List<ServiceRegistration> functions;
+	private List<ServiceRegistration> devices;
 	
-	List<ClusterFunctionFactory> factories;
+	private Map<String,ClusterFunctionFactory> factories;
 	
 	public ZigBeeDalAdapter(){
-		factories=new LinkedList<ClusterFunctionFactory>();
-		factories.add(new BooleanControlOnOffFactory());
-		factories.add(new MeterSimpleMeteringFactory());
+		//add factories
+		factories=new HashMap<String,ClusterFunctionFactory>();
+		addClusterFunctionFactory(new BooleanControlOnOffFactory());
+		addClusterFunctionFactory(new MeterSimpleMeteringFactory());
+		
 		functions=new LinkedList<ServiceRegistration>();
 		devices=new LinkedList<ServiceRegistration>();
+	}
+	
+	private void addClusterFunctionFactory(ClusterFunctionFactory factory)
+	{
+		this.factories.put(factory.getMatchingCluster(), factory);
 	}
 	
 	@Override
@@ -81,14 +96,11 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		{
 			for(IServiceCluster cluster:ep.getServiceClusters())
 			{
-				for(ClusterFunctionFactory factory:this.factories)
+				if(factories.containsKey(cluster.getName()))
 				{
-					if(factory.isClusterMatching(cluster.getName()))
-					{
-						//register function service
-						functions.add(factory.createFunctionService(appliance,
-								ep.getId(), appliancesProxy));
-					}
+					//register function service
+					functions.add(factories.get(cluster.getName()).createFunctionService(appliance,
+							ep.getId(), appliancesProxy));
 				}
 			}
 		}
@@ -96,7 +108,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		
 		//register device service
 		Dictionary d=new Hashtable();
-		//FIXME: change device ID
+		
 		d.put(Device.SERVICE_DRIVER, "ZigBee");
 		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		d.put(Device.SERVICE_STATUS, "2");
@@ -123,17 +135,69 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	public void notifyAttributeValue(String appliancePid, Integer endPointId, String clusterName, String attributeName,
 			IAttributeValue attributeValue) {
 		LOG.info(attributeValue.toString());
+		if(!(this.factories.containsKey(clusterName)))
+		{
+			LOG.error("No DAL adapter is defined for cluster "+endPointId);
+			return;
+		}
+		IAppliance appliance=appliancesProxy.getAppliance(appliancePid);
+		if(appliance==null)
+		{
+			LOG.error("The notified value arrives from a non-existing appliance");
+		}
 		
-		Hashtable properties=new Hashtable();
-
+		String functionUid=this.factories.get(clusterName).getFunctionUID(appliance);
+		
+		String filterString = "("+Function.SERVICE_UID+"="+functionUid+")";
+		
+		//Filter filter=FrameworkUtil.getBundle(this.getClass()).getBundleContext().createFilter(filterString);
+		BundleContext ctx;
+		ctx=FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+		ServiceReference[] functionRefs;
+		try {
+			functionRefs = (ServiceReference[]) ctx.getServiceReferences(
+				    Function.class.getName(),
+				    filterString);
+	
+		
+			if (null == functionRefs)
+			{
+				LOG.error("No function reference found");
+			    return; // no such services
+			}
+			
+			if(functionRefs.length!=1)
+			{
+				LOG.error("Invalid size ("+functionRefs.length+") for list of service references to function with UID:"+functionUid);
+				return;
+			}
+			
+			ClusterDALAdapter adapter= ctx.getService(functionRefs[0]);
+			
+			FunctionData newValue=adapter.getMatchingPropertyValue(attributeName, attributeValue);
+			if(newValue!=null)
+			{
+				Dictionary properties=new Hashtable();
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, functionUid);
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, this.factories.get(clusterName).getMatchingPropertyName(attributeName));
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, adapter.getMatchingPropertyValue(attributeName, attributeValue));
+				
+				Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,properties);
+	
+				this.eventAdmin.postEvent(evt);
+			}
+			ctx.ungetService(functionRefs[0]);
+			
+		} catch (InvalidSyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
+		
 		/*
-		properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, context.getProperties().get(Function.SERVICE_UID));
-		properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, "data");
-		properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, attributeValue.getValue());
-		
-		Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,(Dictionary)properties);
-
-		this.eventAdmin.postEvent(evt);*/
+		*/
 		
 	}
 	
@@ -147,4 +211,13 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		this.appliancesProxy=null;
 	}
 
+	public void bindEventAdmin(EventAdmin eventAdmin)
+	{
+		this.eventAdmin=eventAdmin;
+	}
+	
+	public void unbindEventAdmin(EventAdmin eventAdmin)
+	{
+		this.eventAdmin=eventAdmin;
+	}
 }

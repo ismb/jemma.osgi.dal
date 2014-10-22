@@ -1,9 +1,12 @@
 package org.energy_home.jemma.osgi.dal.factories;
 
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 
 import org.energy_home.jemma.ah.hac.IAppliance;
+import org.energy_home.jemma.ah.hac.lib.AttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.ClusterFunctionFactory;
 import org.energy_home.jemma.osgi.dal.impl.BooleanControlDALAdapter;
@@ -11,27 +14,26 @@ import org.energy_home.jemma.osgi.dal.utils.IDConverters;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.dal.Function;
+import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.functions.BooleanControl;
+import org.osgi.service.dal.functions.data.BooleanData;
 
 public class BooleanControlOnOffFactory implements ClusterFunctionFactory {
 
+	Map<String,String> propertiesMapping;
 	
-	
-	@Override
-	public boolean isClusterMatching(String clusterName) {
-		if("org.energy_home.jemma.ah.cluster.zigbee.general.OnOffServer".equals(clusterName))
-		{
-			return true;
-		}
-		return false;
+	public BooleanControlOnOffFactory()
+	{
+		propertiesMapping=new HashMap<String, String>();
+		propertiesMapping.put("OnOff",BooleanControl.PROPERTY_DATA);
 	}
-
+	
 	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		Dictionary d=new Hashtable();
 		
 		d.put(Function.SERVICE_DEVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
-		d.put(Function.SERVICE_UID, IDConverters.getFunctionUid(appliance.getPid(), appliance.getConfiguration(),"OnOff"));
+		d.put(Function.SERVICE_UID, getFunctionUID(appliance));
 		
 		d.put(Function.SERVICE_OPERATION_NAMES, new String[]{
 				BooleanControl.OPERATION_REVERSE,
@@ -42,6 +44,21 @@ public class BooleanControlOnOffFactory implements ClusterFunctionFactory {
 				new String[]{Function.class.getName(),BooleanControl.class.getName()}, 
 				new BooleanControlDALAdapter(appliance.getPid(), endPointId, appliancesProxy), 
 				d);		
+	}
+
+	@Override
+	public String getMatchingCluster() {
+		return "org.energy_home.jemma.ah.cluster.zigbee.general.OnOffServer";
+	}
+
+	@Override
+	public String getFunctionUID(IAppliance appliance) {
+		return IDConverters.getFunctionUid(appliance.getPid(), appliance.getConfiguration(),"OnOff");
+	}
+
+	@Override
+	public String getMatchingPropertyName(String attributeName) {
+		return propertiesMapping.get(attributeName);
 	}
 
 }

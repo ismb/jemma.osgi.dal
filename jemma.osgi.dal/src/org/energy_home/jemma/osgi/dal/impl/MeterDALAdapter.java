@@ -2,13 +2,18 @@ package org.energy_home.jemma.osgi.dal.impl;
 
 import java.math.BigDecimal;
 
+import org.energy_home.jemma.ah.hac.IAttributeValue;
+import org.energy_home.jemma.ah.hac.lib.AttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.osgi.service.dal.DeviceException;
+import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.OperationMetadata;
 import org.osgi.service.dal.PropertyMetadata;
 import org.osgi.service.dal.Units;
 import org.osgi.service.dal.functions.Meter;
 import org.osgi.service.dal.functions.data.LevelData;
+
+import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
 
 public class MeterDALAdapter extends BaseDALAdapter implements Meter{
 
@@ -39,6 +44,16 @@ public class MeterDALAdapter extends BaseDALAdapter implements Meter{
 		return null;
 	}
 
+	public Integer getDivisor() throws Exception {
+		updateDivisor();
+		return divisor;
+	}
+
+	public Integer getMultiplier() throws Exception {
+		updateMultiplier();
+		return multiplier;
+	}
+	
 	private void updateDivisor() throws Exception
 	{
 		if(divisor==null)
@@ -64,54 +79,77 @@ public class MeterDALAdapter extends BaseDALAdapter implements Meter{
 	
 	@Override
 	public LevelData getCurrent() throws UnsupportedOperationException, IllegalStateException, DeviceException {
-
+		BigDecimal result=null;
 		int instantaneousDemand;
 		try {
 			instantaneousDemand=(int)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, SIMPLEMETERINGCLUSTER,
 					"getIstantaneousDemand", 
 					createParams(SIMPLEMETERINGCLUSTER, "getIstantaneousDemand", new String[0]));
-			updateDivisor();
-			updateMultiplier();
+			result=this.scaleValues(new BigDecimal(instantaneousDemand));
+			
 		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(),e.getCause());
 		}
-		BigDecimal result=new BigDecimal(instantaneousDemand);
-		//level in KW
-		BigDecimal level= result.multiply(new BigDecimal(multiplier)).divide(new BigDecimal(divisor));
 		
-		//i need the value in Watt
-		level=level.multiply(new BigDecimal(1000));
 		
-		LevelData data=new LevelData(System.currentTimeMillis(), null, Units.WATT, level);
+		LevelData data=new LevelData(System.currentTimeMillis(), null, Units.WATT, result);
 		return data;
 	}
 
 	@Override
 	public LevelData getTotal() throws UnsupportedOperationException, IllegalStateException, DeviceException {
+		BigDecimal result=null;
 		long total;
 		try {
 			total=(long)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, SIMPLEMETERINGCLUSTER,
 					"getCurrentSummationDelivered", 
 					createParams(SIMPLEMETERINGCLUSTER, "getCurrentSummationDelivered", new String[0]));
-			updateDivisor();
-			updateMultiplier();
+			result=this.scaleValues(new BigDecimal(total));
 		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(),e.getCause());
 		}
-		BigDecimal result=new BigDecimal(total);
-		//level in KW*h
-		BigDecimal level= result.multiply(new BigDecimal(multiplier)).divide(new BigDecimal(divisor));
 		
-		//i need the value in Watt*per hour
-		level=level.multiply(new BigDecimal(1000));
-		LevelData data=new LevelData(System.currentTimeMillis(), null, Units.WATT_PER_HOUR, level);
+		
+		LevelData data=new LevelData(System.currentTimeMillis(), null, Units.WATT_PER_HOUR, result);
 		return data;
+	}
+	
+	private BigDecimal scaleValues(BigDecimal value) throws Exception
+	{
+		BigDecimal factor=new BigDecimal(getMultiplier())
+			.divide(new BigDecimal(getDivisor())) //now I have the factor for conversion in KW*h
+			//I need the value in Watt (or Watt*Hour)
+			.multiply(new BigDecimal(1000));
+		
+		BigDecimal level=value.multiply(factor);
+		return level;
 	}
 
 	@Override
 	public void resetTotal() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		throw new UnsupportedOperationException("Unsupported operation");
 		
+	}
+
+	@Override
+	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue attributeValue) {
+		LevelData levelData=null;
+		try {
+		
+			if(attributeName=="CurrentSummationDelivered")
+			{
+				long value=(long)(attributeValue.getValue());
+				
+					levelData=new LevelData(attributeValue.getTimestamp(), null, Units.WATT_PER_HOUR, scaleValues(new BigDecimal(value)));
+			}else if(attributeName=="IstantaneousDemand")
+			{
+				int value=(int)(attributeValue.getValue());
+				levelData=new LevelData(attributeValue.getTimestamp(), null, Units.WATT, scaleValues(new BigDecimal(value)));
+			}
+		} catch (Exception e) {
+			
+		}
+		return levelData;
 	} 
 
 }

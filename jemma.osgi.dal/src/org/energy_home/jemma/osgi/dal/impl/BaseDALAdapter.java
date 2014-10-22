@@ -2,8 +2,9 @@ package org.energy_home.jemma.osgi.dal.impl;
 
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.ah.hac.lib.ext.TextConverter;
+import org.energy_home.jemma.osgi.dal.ClusterDALAdapter;
 
-public abstract class BaseDALAdapter {
+public abstract class BaseDALAdapter implements ClusterDALAdapter{
 
 	protected IAppliancesProxy appliancesProxy;
 	protected Integer endPointId;

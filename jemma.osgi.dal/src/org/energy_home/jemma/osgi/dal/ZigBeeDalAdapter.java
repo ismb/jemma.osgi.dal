@@ -115,11 +115,15 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		
 		d.put(Device.SERVICE_DRIVER, "ZigBee");
 		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
+		//the service status must be initially set STATUS_PROCESSING
 		d.put(Device.SERVICE_STATUS, Device.STATUS_PROCESSING);
 		devices.put(appliance.getPid(),FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
 				Device.class,
 				new JemmaDevice(),
 				d));
+		
+		//update device properties according to appliance status
+		updateDeviceServiceProperties(appliance);
 		
 	}
 
@@ -157,31 +161,38 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		}
 		if(devices.containsKey(appliance.getPid()))
 		{
-			Dictionary d=new Hashtable();
-			
-			d.put(Device.SERVICE_DRIVER, "ZigBee");
-			d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
-			
-			if(appliance.isAvailable())
-			{
-				d.put(Device.SERVICE_STATUS, Device.STATUS_ONLINE);
-			}else{
-				d.put(Device.SERVICE_STATUS, Device.STATUS_OFFLINE);
-			}
-			//update service properties
-			ServiceRegistration reg=devices.get(appliance.getPid());
-			reg.setProperties(d);
-			
-			//inform the framework that the service have been modified
-			ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, reg.getReference());
-			Dictionary props = new Hashtable();
-		    props.put(EventConstants.EVENT, serviceEvent);
-		    props.put(EventConstants.SERVICE, serviceEvent.getServiceReference());
-		    props.put(EventConstants.SERVICE_PID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_PID));
-		    props.put(EventConstants.SERVICE_ID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_ID));
-		    props.put(EventConstants.SERVICE_OBJECTCLASS, serviceEvent.getServiceReference().getProperty(Constants.OBJECTCLASS)); 
-		    eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+			updateDeviceServiceProperties(appliance);
 		}
+	}
+
+	private void updateDeviceServiceProperties(IAppliance appliance) {
+		
+		Dictionary d=new Hashtable();
+		
+		d.put(Device.SERVICE_DRIVER, "ZigBee");
+		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
+		
+		//change the DAL Device Service status property accoring to Device avialability
+		if(appliance.isAvailable())
+		{
+			d.put(Device.SERVICE_STATUS, Device.STATUS_ONLINE);
+		}else{
+			d.put(Device.SERVICE_STATUS, Device.STATUS_OFFLINE);
+		}
+
+		//update service properties
+		ServiceRegistration reg=devices.get(appliance.getPid());
+		reg.setProperties(d);
+		
+		//inform the framework that the service have been modified
+		ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, reg.getReference());
+		Dictionary props = new Hashtable();
+		props.put(EventConstants.EVENT, serviceEvent);
+		props.put(EventConstants.SERVICE, serviceEvent.getServiceReference());
+		props.put(EventConstants.SERVICE_PID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_PID));
+		props.put(EventConstants.SERVICE_ID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_ID));
+		props.put(EventConstants.SERVICE_OBJECTCLASS, serviceEvent.getServiceReference().getProperty(Constants.OBJECTCLASS)); 
+		eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
 	}
 
 	@Override

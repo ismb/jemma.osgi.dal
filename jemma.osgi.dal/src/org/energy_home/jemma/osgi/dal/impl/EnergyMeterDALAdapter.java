@@ -15,14 +15,14 @@ import org.osgi.service.dal.functions.data.LevelData;
 
 import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
 
-public class MeterDALAdapter extends BaseDALAdapter implements Meter{
+public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 
 	private Integer divisor=null;
 	private Integer multiplier=null;
 	
 	private static String SIMPLEMETERINGCLUSTER="org.energy_home.jemma.ah.cluster.zigbee.metering.SimpleMeteringServer";
 	
-	public MeterDALAdapter(String appliancePid, Integer endPointId, IAppliancesProxy appliancesProxy) {
+	public EnergyMeterDALAdapter(String appliancePid, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		super(appliancePid, endPointId, appliancesProxy);
 	}
 
@@ -63,6 +63,12 @@ public class MeterDALAdapter extends BaseDALAdapter implements Meter{
 				SIMPLEMETERINGCLUSTER, "getDivisor", 
 				createParams(SIMPLEMETERINGCLUSTER, "getDivisor", new String[0]));
 		}
+		
+		//Work-around: Indesit White goods does not report divisor and multiplier
+		if(divisor==0)
+		{
+			divisor=10000;
+		}
 	}
 	
 	private void updateMultiplier() throws Exception
@@ -74,6 +80,11 @@ public class MeterDALAdapter extends BaseDALAdapter implements Meter{
 				SIMPLEMETERINGCLUSTER, 
 				"getMultiplier", 
 				createParams(SIMPLEMETERINGCLUSTER, "gedMultiplier", new String[0]));
+		}
+		//Work-around: Indesit White goods does not report divisor and multiplier
+		if(multiplier==0)
+		{
+			multiplier=1;
 		}
 	}
 	

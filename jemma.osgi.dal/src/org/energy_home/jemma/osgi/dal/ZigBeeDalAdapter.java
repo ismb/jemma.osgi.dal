@@ -18,7 +18,8 @@ import org.energy_home.jemma.ah.hac.IEndPoint;
 import org.energy_home.jemma.ah.hac.IServiceCluster;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.factories.BooleanControlOnOffFactory;
-import org.energy_home.jemma.osgi.dal.factories.MeterSimpleMeteringFactory;
+import org.energy_home.jemma.osgi.dal.factories.EnergyMeterSimpleMeteringFactory;
+import org.energy_home.jemma.osgi.dal.factories.TemperatureMeterThermostatFactory;
 import org.energy_home.jemma.osgi.dal.utils.IDConverters;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -43,8 +44,8 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	
 	private static final Logger LOG = LoggerFactory.getLogger( ZigBeeDalAdapter.class );
 	
-	private List<ServiceRegistration> functions;
-	private List<ServiceRegistration> devices;
+	private Map<String,List<ServiceRegistration>> functions;
+	private Map<String,ServiceRegistration> devices;
 	
 	private Map<String,ClusterFunctionFactory> factories;
 	
@@ -52,10 +53,11 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		//add factories
 		factories=new HashMap<String,ClusterFunctionFactory>();
 		addClusterFunctionFactory(new BooleanControlOnOffFactory());
-		addClusterFunctionFactory(new MeterSimpleMeteringFactory());
+		addClusterFunctionFactory(new EnergyMeterSimpleMeteringFactory());
+		addClusterFunctionFactory(new TemperatureMeterThermostatFactory());
 		
-		functions=new LinkedList<ServiceRegistration>();
-		devices=new LinkedList<ServiceRegistration>();
+		functions=new HashMap<String,List<ServiceRegistration>>();
+		devices=new HashMap<String,ServiceRegistration>();
 	}
 	
 	private void addClusterFunctionFactory(ClusterFunctionFactory factory)
@@ -70,7 +72,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	}
 
 	/**
-	 * Method called byt JEMMA when a new appliance is configured in the framework
+	 * Method called by JEMMA when a new appliance is configured in the framework
 	 * @param endPoint
 	 * @param appliance
 	 */
@@ -99,36 +101,51 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 				if(factories.containsKey(cluster.getName()))
 				{
 					//register function service
-					functions.add(factories.get(cluster.getName()).createFunctionService(appliance,
+					addFunctionRegistration(appliance.getPid(),factories.get(cluster.getName()).createFunctionService(appliance,
 							ep.getId(), appliancesProxy));
 				}
 			}
 		}
 
-		
 		//register device service
 		Dictionary d=new Hashtable();
 		
 		d.put(Device.SERVICE_DRIVER, "ZigBee");
 		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		d.put(Device.SERVICE_STATUS, "2");
-		devices.add(FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
+		devices.put(appliance.getPid(),FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
 				Device.class,
 				new JemmaDevice(),
 				d));
 		
 	}
 
+	private void addFunctionRegistration(String appliancePid,ServiceRegistration registration) {
+		if(!functions.containsKey(appliancePid))
+		{
+			functions.put(appliancePid, new LinkedList<ServiceRegistration>());
+		}
+		functions.get(appliancePid).add(registration);
+	}
+
 	@Override
 	public void notifyApplianceRemoved(IAppliance appliance) {
-		// an appliance have been removed, unregister Device and Functions
-
+		//unregister Device service
+		if(devices.containsKey(appliance.getPid()))
+		{
+			devices.get(appliance.getPid()).unregister();
+		}
+		
+		//unregister function services
+		for(ServiceRegistration reg:functions.get(appliance.getPid()))
+		{
+			reg.unregister();
+		}
 	}
 
 	@Override
 	public void notifyApplianceAvailabilityUpdated(IAppliance appliance) {
-		// Update appliances references
-		
+		//TODO: add here status code change for registered device service		
 	}
 
 	@Override
@@ -180,7 +197,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 				Dictionary properties=new Hashtable();
 				properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, functionUid);
 				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, this.factories.get(clusterName).getMatchingPropertyName(attributeName));
-				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, adapter.getMatchingPropertyValue(attributeName, attributeValue));
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, newValue);
 				
 				Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,properties);
 	

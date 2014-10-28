@@ -103,4 +103,10 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 		return new BooleanData(value.getTimestamp(), null, (boolean) value.getValue());
 	}
 
+	@Override
+	public void updateApplianceSubscriptions() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

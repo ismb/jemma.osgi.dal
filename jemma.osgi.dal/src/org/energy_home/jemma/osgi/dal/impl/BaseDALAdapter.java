@@ -43,4 +43,6 @@ public abstract class BaseDALAdapter implements ClusterDALAdapter{
 		}
 		return objectParams;
 	}
+	
+	public abstract void updateApplianceSubscriptions();
 }

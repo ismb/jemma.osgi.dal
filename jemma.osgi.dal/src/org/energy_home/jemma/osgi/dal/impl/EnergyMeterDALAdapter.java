@@ -161,6 +161,12 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 			
 		}
 		return levelData;
+	}
+
+	@Override
+	public void updateApplianceSubscriptions() {
+		// TODO Auto-generated method stub
+		
 	} 
 
 }

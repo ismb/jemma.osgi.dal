@@ -1,5 +1,6 @@
 package org.energy_home.jemma.osgi.dal;
 
+import java.awt.Frame;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -20,6 +21,8 @@ import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.factories.BooleanControlOnOffFactory;
 import org.energy_home.jemma.osgi.dal.factories.EnergyMeterSimpleMeteringFactory;
 import org.energy_home.jemma.osgi.dal.factories.TemperatureMeterThermostatFactory;
+import org.energy_home.jemma.osgi.dal.factories.WhiteGoodApplianceControlFactory;
+import org.energy_home.jemma.osgi.dal.impl.BaseDALAdapter;
 import org.energy_home.jemma.osgi.dal.utils.IDConverters;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -58,6 +61,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		addClusterFunctionFactory(new BooleanControlOnOffFactory());
 		addClusterFunctionFactory(new EnergyMeterSimpleMeteringFactory());
 		addClusterFunctionFactory(new TemperatureMeterThermostatFactory());
+		addClusterFunctionFactory(new WhiteGoodApplianceControlFactory());
 		
 		functions=new HashMap<String,List<ServiceRegistration>>();
 		devices=new HashMap<String,ServiceRegistration>();
@@ -79,6 +83,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	 * @param endPoint
 	 * @param appliance
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void notifyApplianceAdded(IApplicationEndPoint endPoint, IAppliance appliance) {
 		if(!appliance.isDriver())
@@ -165,6 +170,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		}
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void updateDeviceServiceProperties(IAppliance appliance) {
 		
 		Dictionary d=new Hashtable();
@@ -172,7 +178,24 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		d.put(Device.SERVICE_DRIVER, "ZigBee");
 		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		
-		//change the DAL Device Service status property accoring to Device avialability
+		ServiceRegistration reg=devices.get(appliance.getPid());
+		
+		try{
+			//try to update subscription for all functions associated to this device
+			for(ServiceRegistration freg:functions.get(appliance.getPid()))
+			{
+				BundleContext ctx=FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+				ServiceReference ref=freg.getReference();
+				BaseDALAdapter functionAdapter=ctx.getService(ref);
+				functionAdapter.updateApplianceSubscriptions();
+				ctx.ungetService(ref);
+			}
+		}catch(Exception e)
+		{
+			LOG.error("error updating attributes subscription",e);
+		}
+		
+		//change the DAL Device Service status property according to Device avialability
 		if(appliance.isAvailable())
 		{
 			d.put(Device.SERVICE_STATUS, Device.STATUS_ONLINE);
@@ -180,24 +203,31 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 			d.put(Device.SERVICE_STATUS, Device.STATUS_OFFLINE);
 		}
 
-		//update service properties
-		ServiceRegistration reg=devices.get(appliance.getPid());
-		reg.setProperties(d);
-		
-		//inform the framework that the service have been modified
-		ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, reg.getReference());
-		Dictionary props = new Hashtable();
-		props.put(EventConstants.EVENT, serviceEvent);
-		props.put(EventConstants.SERVICE, serviceEvent.getServiceReference());
-		props.put(EventConstants.SERVICE_PID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_PID));
-		props.put(EventConstants.SERVICE_ID, serviceEvent.getServiceReference().getProperty(Constants.SERVICE_ID));
-		props.put(EventConstants.SERVICE_OBJECTCLASS, serviceEvent.getServiceReference().getProperty(Constants.OBJECTCLASS)); 
-		eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+		//update service properties if availability changed
+		ServiceReference ref=reg.getReference();
+		if(!(ref.getProperty(Device.SERVICE_STATUS).equals(d.get(Device.SERVICE_STATUS))))
+		{
+			reg.setProperties(d);
+			
+			//inform the framework that the service have been modified
+			ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, ref);
+			
+			Dictionary props = new Hashtable();
+			props.put(EventConstants.EVENT, serviceEvent);
+			props.put(EventConstants.SERVICE, ref);
+			props.put(EventConstants.SERVICE_PID, ref.getProperty(Constants.SERVICE_PID));
+			props.put(EventConstants.SERVICE_ID, ref.getProperty(Constants.SERVICE_ID));
+			props.put(EventConstants.SERVICE_OBJECTCLASS, ref.getProperty(Constants.OBJECTCLASS)); 
+			eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+		}
+		//release service reference
+		FrameworkUtil.getBundle(this.getClass()).getBundleContext().ungetService(ref);
 	}
 
 	@Override
 	public void notifyAttributeValue(String appliancePid, Integer endPointId, String clusterName, String attributeName,
 			IAttributeValue attributeValue) {
+		
 		LOG.info(attributeValue.toString());
 		if(!(this.factories.containsKey(clusterName)))
 		{
@@ -209,6 +239,9 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		{
 			LOG.error("The notified value arrives from a non-existing appliance");
 		}
+		
+		//update device service properties status if they are changed: JEMMA is lazy notifying availability changes 
+		updateDeviceServiceProperties(appliancesProxy.getAppliance(appliancePid));
 		
 		String functionUid=this.factories.get(clusterName).getFunctionUID(appliance);
 		
@@ -256,12 +289,6 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
-		
-		
-		/*
-		*/
 		
 	}
 	

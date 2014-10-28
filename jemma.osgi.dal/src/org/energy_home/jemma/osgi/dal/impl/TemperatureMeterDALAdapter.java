@@ -2,19 +2,17 @@ package org.energy_home.jemma.osgi.dal.impl;
 
 import java.math.BigDecimal;
 
+import org.energy_home.jemma.ah.hac.IAppliance;
 import org.energy_home.jemma.ah.hac.IAttributeValue;
-import org.energy_home.jemma.ah.hac.lib.AttributeValue;
+import org.energy_home.jemma.ah.hac.lib.SubscriptionParameters;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.osgi.service.dal.DeviceException;
 import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.OperationMetadata;
 import org.osgi.service.dal.PropertyMetadata;
 import org.osgi.service.dal.Units;
-import org.osgi.service.dal.functions.Meter;
 import org.osgi.service.dal.functions.MultiLevelSensor;
 import org.osgi.service.dal.functions.data.LevelData;
-
-import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
 
 public class TemperatureMeterDALAdapter extends BaseDALAdapter implements MultiLevelSensor{
 
@@ -76,6 +74,22 @@ public class TemperatureMeterDALAdapter extends BaseDALAdapter implements MultiL
 		
 		LevelData data=new LevelData(System.currentTimeMillis(), null, Units.DEGREE_CELSIUS, result);
 		return data;
+		
+	}
+
+	@Override
+	public void updateApplianceSubscriptions() {
+		try {
+			//Subscribe to LocalTemperature attribute notification
+			IAppliance appliance=appliancesProxy.getAppliance(appliancePid);
+			appliance.getEndPoint(endPointId)
+				.getServiceCluster(THERMOSTATCLUSTER)
+				.setAttributeSubscription("LocalTemperature", 
+						new SubscriptionParameters(10, 30, 1),
+						appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 	} 
 

@@ -18,7 +18,9 @@ import org.energy_home.jemma.ah.hac.IAttributeValuesListener;
 import org.energy_home.jemma.ah.hac.IEndPoint;
 import org.energy_home.jemma.ah.hac.IServiceCluster;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
+import org.energy_home.jemma.osgi.dal.factories.BooleanControlDoorLockFactory;
 import org.energy_home.jemma.osgi.dal.factories.BooleanControlOnOffFactory;
+import org.energy_home.jemma.osgi.dal.factories.ColorControlFactory;
 import org.energy_home.jemma.osgi.dal.factories.EnergyMeterSimpleMeteringFactory;
 import org.energy_home.jemma.osgi.dal.factories.TemperatureMeterThermostatFactory;
 import org.energy_home.jemma.osgi.dal.factories.WhiteGoodApplianceControlFactory;
@@ -62,6 +64,8 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		addClusterFunctionFactory(new EnergyMeterSimpleMeteringFactory());
 		addClusterFunctionFactory(new TemperatureMeterThermostatFactory());
 		addClusterFunctionFactory(new WhiteGoodApplianceControlFactory());
+		addClusterFunctionFactory(new ColorControlFactory());
+		addClusterFunctionFactory(new BooleanControlDoorLockFactory());
 		
 		functions=new HashMap<String,List<ServiceRegistration>>();
 		devices=new HashMap<String,ServiceRegistration>();
@@ -142,14 +146,18 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 
 	@Override
 	public void notifyApplianceRemoved(IAppliance appliance) {
+		unregisterApplianceServices(appliance.getPid());
+	}
+
+	private void unregisterApplianceServices(String appliancePid) {
 		//unregister Device service
-		if(devices.containsKey(appliance.getPid()))
+		if(devices.containsKey(appliancePid))
 		{
-			devices.get(appliance.getPid()).unregister();
+			devices.get(appliancePid).unregister();
 		}
 		
 		//unregister function services
-		for(ServiceRegistration reg:functions.get(appliance.getPid()))
+		for(ServiceRegistration reg:functions.get(appliancePid))
 		{
 			reg.unregister();
 		}
@@ -290,6 +298,15 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public void deactivate()
+	{
+		//unregister all appliances services
+		for(String pid:this.devices.keySet())
+		{
+			unregisterApplianceServices(pid);
+		}
 	}
 	
 	public void bindAppliancesProxy(IAppliancesProxy appliancesProxy)

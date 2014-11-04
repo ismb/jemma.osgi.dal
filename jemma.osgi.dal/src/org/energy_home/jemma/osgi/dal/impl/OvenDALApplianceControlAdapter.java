@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import javax.lang.model.element.ExecutableElement;
 
+import org.energy_home.dal.functions.Oven;
 import org.energy_home.dal.functions.WashingMachine;
 import org.energy_home.dal.functions.data.TimeData;
 import org.energy_home.dal.functions.type.TimeAttribute;
@@ -21,13 +22,13 @@ import org.osgi.service.dal.PropertyMetadata;
 import org.osgi.service.dal.Units;
 import org.osgi.service.dal.functions.data.LevelData;
 
-public class WashingMachineDALApplianceControlAdapter extends BaseApplianceControlDalAdapter implements WashingMachine{
+public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapter implements Oven{
 
 	private static String ZIGBEETIMEUNIT="ZIGBEE_TIME";
 	private static String SPINUNIT="SPIN";
 	private static String CYCLEUNIT="CYCLE";
 	
-	public WashingMachineDALApplianceControlAdapter(String appliancePid, Integer endPointId,
+	public OvenDALApplianceControlAdapter(String appliancePid, Integer endPointId,
 			IAppliancesProxy appliancesProxy) {
 		super(appliancePid, endPointId, appliancesProxy);
 	}
@@ -127,24 +128,6 @@ public class WashingMachineDALApplianceControlAdapter extends BaseApplianceContr
 	@Override
 	public void setTemperature(Integer temperature)  throws DeviceException {
 		execSingleWriteFunction(ApplianceControlServer.ATTR_TemperatureTarget0_NAME, temperature);
-	}
-
-	@Override
-	public LevelData getSpin() throws DeviceException {
-		LevelData spin=null;
-		int result;
-		try {
-			result=getCluster().getSpin(appliancesProxy.getRequestContext(true));
-		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(),e.getCause());
-		}
-		spin=new LevelData(System.currentTimeMillis(), null, "SPIN", new BigDecimal(result));
-		return spin;
-	}
-
-	@Override
-	public void setSpin(Short spin)  throws DeviceException{
-		execSingleWriteFunction(ApplianceControlServer.ATTR_Spin_NAME, spin);
 	}
 
 	@Override

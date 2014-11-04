@@ -5,11 +5,16 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.energy_home.dal.functions.Fridge;
+import org.energy_home.dal.functions.Oven;
 import org.energy_home.dal.functions.WashingMachine;
+import org.energy_home.dal.functions.type.TimeAttribute;
 import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer;
 import org.energy_home.jemma.ah.hac.IAppliance;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.ClusterFunctionFactory;
+import org.energy_home.jemma.osgi.dal.impl.FridgeDALApplianceControlAdapter;
+import org.energy_home.jemma.osgi.dal.impl.OvenDALApplianceControlAdapter;
 import org.energy_home.jemma.osgi.dal.impl.TemperatureMeterDALAdapter;
 import org.energy_home.jemma.osgi.dal.impl.WashingMachineDALApplianceControlAdapter;
 import org.energy_home.jemma.osgi.dal.utils.IDConverters;
@@ -68,8 +73,42 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						d);	
 				break;
 			case "38": //It's the oven
+				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{ 
+						"execStartCycle",
+						"execStopCycle",
+						"execPauseCycle",
+						"execOverloadPauseResume",
+						"execOverloadPause",
+						"execOverloadWarning"});
+				d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{
+						Oven.PROPERTY_CYCLE,
+						Oven.PROPERTY_TEMPERATURE,
+						Oven.PROPERTY_STARTTIME,
+						Oven.PROPERTY_FINISHTIME,
+						Oven.PROPERTY_REMAININGTIME
+						});
+				
+				reg=FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
+						new String[]{Function.class.getName(),Oven.class.getName()}, 
+						new OvenDALApplianceControlAdapter(appliance.getPid(), endPointId, appliancesProxy), 
+						d);	
 				break;
 			case "39": //It's the Fridge
+				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{});
+				d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{
+						Fridge.PROPERTY_FRIDGETEMPERATURE,
+						Fridge.PROPERTY_FREEZERTEMPERATURE,
+						Fridge.PROPERTY_ECOMODE,
+						Fridge.PROPERTY_HOLIDAYMODE,
+						Fridge.PROPERTY_ICEPARTY,
+						Fridge.PROPERTY_SUPERCOOLMODE,
+						Fridge.PROPERTY_SUPERFREEZE
+						});
+				
+				reg=FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
+						new String[]{Function.class.getName(),Fridge.class.getName()}, 
+						new FridgeDALApplianceControlAdapter(appliance.getPid(), endPointId, appliancesProxy), 
+						d);	
 				break;
 
 			default: 
@@ -109,5 +148,5 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer";
 	}
-
+	
 }

@@ -100,7 +100,9 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 
 	@Override
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue value) {
-		return new BooleanData(value.getTimestamp(), null, (boolean) value.getValue());
+		boolean v=(boolean) value.getValue();
+		BooleanData data=new BooleanData(value.getTimestamp(), null, v);
+		return data;
 	}
 
 	@Override

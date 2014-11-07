@@ -27,8 +27,6 @@ import org.osgi.service.dal.functions.data.LevelData;
 public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAdapter implements Fridge{
 
 	private static String ZIGBEETIMEUNIT="ZIGBEE_TIME";
-	private static String SPINUNIT="SPIN";
-	private static String CYCLEUNIT="CYCLE";
 	
 	public FridgeDALApplianceControlAdapter(String appliancePid, Integer endPointId,
 			IAppliancesProxy appliancesProxy) {
@@ -47,8 +45,36 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 				break;
 			case ApplianceControlServer.ATTR_TemperatureTarget1_NAME:
 				int value2=(int)(attributeValue.getValue());
-				data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(value2));
+				//value adjustment
+				int realValue=value2-65536;
+				data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(realValue));
 				break;
+			case ApplianceControlServer.ATTR_NormalMode_NAME:
+				Boolean normalMode=(Boolean) attributeValue.getValue();
+				data=new BooleanData(attributeValue.getTimestamp(),null,normalMode.booleanValue());
+				break;
+			case ApplianceControlServer.ATTR_EcoMode_NAME:
+				Boolean ecoMode=(Boolean) attributeValue.getValue();
+				//boolean ecomode= (boolean) attributeValue.getValue();
+				data=new BooleanData(attributeValue.getTimestamp(),null,ecoMode.booleanValue());
+				break;
+			case ApplianceControlServer.ATTR_SuperCoolMode_NAME:
+				Boolean supercool=(Boolean) attributeValue.getValue();
+				data=new BooleanData(attributeValue.getTimestamp(),null,supercool.booleanValue());
+				break;
+			case ApplianceControlServer.ATTR_SuperFreezeMode_NAME:
+				Boolean superfreeze=(Boolean) attributeValue.getValue();
+				data=new BooleanData(attributeValue.getTimestamp(),null,superfreeze.booleanValue());
+				break;
+			case ApplianceControlServer.ATTR_HolidayMode_NAME:
+				Boolean holiday=(Boolean) attributeValue.getValue();
+				data=new BooleanData(attributeValue.getTimestamp(),null,holiday.booleanValue());
+				break;
+			case ApplianceControlServer.ATTR_IceParty_NAME:
+				Boolean iceparty=(Boolean) attributeValue.getValue();
+				data=new BooleanData(attributeValue.getTimestamp(),null,iceparty.booleanValue());
+				break;
+					
 			default:
 				return null;
 		}
@@ -101,7 +127,6 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(),e.getCause());
 		}
-		int max=Integer.MAX_VALUE;
 		//adjust temperature: the Fridge returns it with a gap of 65536
 		int realValue=result-65536;
 		temperature=new LevelData(System.currentTimeMillis(), null, Units.DEGREE_CELSIUS, new BigDecimal(realValue));
@@ -110,8 +135,16 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 
 	@Override
 	public BooleanData getSuperCoolMode() throws DeviceException {
-
-		return null;
+		BooleanData superCoolMode=null;
+		Boolean result;
+		try {
+			result=getCluster().getSuperCoolMode(appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
+		
+		superCoolMode=new BooleanData(System.currentTimeMillis(), null, result);
+		return superCoolMode;
 	}
 
 	@Override
@@ -122,8 +155,16 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 
 	@Override
 	public BooleanData getSuperFreezeMode() throws DeviceException {
-		// TODO Auto-generated method stub
-		return null;
+		BooleanData superFreezeMode=null;
+		Boolean result;
+		try {
+			result=getCluster().getSuperFreezeMode(appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
+		
+		superFreezeMode=new BooleanData(System.currentTimeMillis(), null, result);
+		return superFreezeMode;
 	}
 
 	@Override
@@ -134,8 +175,16 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 
 	@Override
 	public BooleanData getEcoMode() throws DeviceException {
-		// TODO Auto-generated method stub
-		return null;
+		BooleanData ecomode=null;
+		Boolean result;
+		try {
+			result=getCluster().getEcoMode(appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
+		
+		ecomode=new BooleanData(System.currentTimeMillis(), null, result);
+		return ecomode;
 	}
 
 	@Override
@@ -146,8 +195,16 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 
 	@Override
 	public BooleanData getIceParty() throws DeviceException {
-		// TODO Auto-generated method stub
-		return null;
+		BooleanData iceparty=null;
+		Boolean result;
+		try {
+			result=getCluster().getIceParty(appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
+		
+		iceparty=new BooleanData(System.currentTimeMillis(), null, result);
+		return iceparty;
 	}
 
 	@Override
@@ -158,8 +215,16 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 
 	@Override
 	public BooleanData getHolidayMode() throws DeviceException {
-		// TODO Auto-generated method stub
-		return null;
+		BooleanData holidayMode=null;
+		Boolean result;
+		try {
+			result=getCluster().getHolidayMode(appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
+		
+		holidayMode=new BooleanData(System.currentTimeMillis(), null, result);
+		return holidayMode;
 	}
 
 	@Override

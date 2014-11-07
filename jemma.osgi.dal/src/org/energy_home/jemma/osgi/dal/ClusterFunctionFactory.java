@@ -13,7 +13,7 @@ public interface ClusterFunctionFactory {
 	
 	public String getFunctionUID(IAppliance appliance);
 	
-	public String getMatchingPropertyName(String attributeName);
+	public String getMatchingPropertyName(String attributeName,IAppliance appliance);
 	
 	public String getMatchingCluster();
 

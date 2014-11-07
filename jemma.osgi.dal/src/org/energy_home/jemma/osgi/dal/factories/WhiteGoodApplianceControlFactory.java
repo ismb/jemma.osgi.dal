@@ -27,20 +27,33 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 
 	private static String APPLIANCE_IDENTIFICATION_CLUSTER="org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceIdentificationServer";
 	
-	Map<String,String> attributesMap;
+	Map<String,String> washingMachineAttributesMap;
+	Map<String,String> fridgeAttributesMap;
+	Map<String,String> ovenAttributesMap;
 	
 	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId,
 			IAppliancesProxy appliancesProxy) {
 
-		attributesMap=new HashMap<String, String>();
+		washingMachineAttributesMap=new HashMap<String, String>();
+		fridgeAttributesMap=new HashMap<String, String>();
+		ovenAttributesMap=new HashMap<String, String>();
 		
-		attributesMap.put(ApplianceControlServer.ATTR_TemperatureTarget0_NAME, WashingMachine.PROPERTY_TEMPERATURE);
-		attributesMap.put(ApplianceControlServer.ATTR_CycleTarget0_NAME, WashingMachine.PROPERTY_CYCLE);
-		attributesMap.put(ApplianceControlServer.ATTR_Spin_NAME, WashingMachine.PROPERTY_SPIN);
-		attributesMap.put(ApplianceControlServer.ATTR_StartTime_NAME,WashingMachine.PROPERTY_STARTTIME);
-		attributesMap.put(ApplianceControlServer.ATTR_RemainingTime_NAME,WashingMachine.PROPERTY_REMAININGTIME);
-		attributesMap.put(ApplianceControlServer.ATTR_FinishTime_NAME,WashingMachine.PROPERTY_FINISHTIME);
+		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_TemperatureTarget0_NAME, WashingMachine.PROPERTY_TEMPERATURE);
+		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_CycleTarget0_NAME, WashingMachine.PROPERTY_CYCLE);
+		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_Spin_NAME, WashingMachine.PROPERTY_SPIN);
+		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_StartTime_NAME,WashingMachine.PROPERTY_STARTTIME);
+		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_RemainingTime_NAME,WashingMachine.PROPERTY_REMAININGTIME);
+		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_FinishTime_NAME,WashingMachine.PROPERTY_FINISHTIME);
+		
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_TemperatureTarget0_NAME, Fridge.PROPERTY_FRIDGETEMPERATURE);
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_TemperatureTarget1_NAME, Fridge.PROPERTY_FREEZERTEMPERATURE);
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_EcoMode_NAME,Fridge.PROPERTY_ECOMODE);
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_NormalMode_NAME,Fridge.PROPERTY_NORMALMODE);
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_HolidayMode_NAME,Fridge.PROPERTY_HOLIDAYMODE);
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_IceParty_NAME,Fridge.PROPERTY_ICEPARTY);
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_SuperCoolMode_NAME,Fridge.PROPERTY_SUPERCOOLMODE);
+		fridgeAttributesMap.put(ApplianceControlServer.ATTR_SuperFreezeMode_NAME,Fridge.PROPERTY_SUPERFREEZE);
 		
 		String category=(String)appliance.getConfiguration().get("ah.category.pid");
 		ServiceRegistration reg=null;
@@ -48,9 +61,9 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		d.put(Function.SERVICE_DEVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		d.put(Function.SERVICE_UID, getFunctionUID(appliance));
 		//WARNING: the category depends on Configuration, make sure you use EmptyConfig.xml file is loaded
-		switch(category)
+		switch(getCategory(appliance))
 		{
-			case "37": //It's a Washing machine
+			case 37: //It's a Washing machine
 				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{ 
 						"execStartCycle",
 						"execStopCycle",
@@ -72,7 +85,7 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						new WashingMachineDALApplianceControlAdapter(appliance.getPid(), endPointId, appliancesProxy), 
 						d);	
 				break;
-			case "38": //It's the oven
+			case 38: //It's the oven
 				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{ 
 						"execStartCycle",
 						"execStopCycle",
@@ -93,7 +106,7 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						new OvenDALApplianceControlAdapter(appliance.getPid(), endPointId, appliancesProxy), 
 						d);	
 				break;
-			case "39": //It's the Fridge
+			case 39: //It's the Fridge
 				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{});
 				d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{
 						Fridge.PROPERTY_FRIDGETEMPERATURE,
@@ -122,14 +135,14 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 
 	@Override
 	public String getFunctionUID(IAppliance appliance) {
-		String category=(String)appliance.getConfiguration().get("ah.category.pid");
-		switch(category)
+		
+		switch(getCategory(appliance))
 		{
-			case "37": //Washing machine
+			case 37: //Washing machine
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "WashingMachine");
-			case "38": //Oven
+			case 38: //Oven
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "Oven");
-			case "39": //Fridge
+			case 39: //Fridge
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "Fridge");
 			default: 
 				//unmanaged appliance
@@ -138,10 +151,27 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		
 	}
 
+	private int getCategory(IAppliance app)
+	{
+		String category=(String)app.getConfiguration().get("ah.category.pid");
+		Integer cat=Integer.parseInt(category);
+		return cat;
+	}
+	
 	@Override
-	public String getMatchingPropertyName(String attributeName) {
-		// TODO Auto-generated method stub
-		return attributesMap.get(attributeName);
+	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
+		switch(getCategory(appliance))
+		{
+			case 37: //Washing machine
+				return washingMachineAttributesMap.get(attributeName);
+			case 38: //Oven
+				return ovenAttributesMap.get(attributeName);
+			case 39: //Fridge
+				return fridgeAttributesMap.get(attributeName);
+			default:
+				return null;
+		}
+		
 	}
 
 	@Override

@@ -165,7 +165,6 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 
 	@Override 
 	public void notifyApplianceAvailabilityUpdated(IAppliance appliance) {
-		
 		LOG.info("Appliance availability updated");
 		if(!appliance.isDriver())
 		{
@@ -284,7 +283,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 			{
 				Dictionary properties=new Hashtable();
 				properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, functionUid);
-				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, this.factories.get(clusterName).getMatchingPropertyName(attributeName));
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, this.factories.get(clusterName).getMatchingPropertyName(attributeName,appliancesProxy.getAppliance(appliancePid)));
 				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, newValue);
 				
 				Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,properties);

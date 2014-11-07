@@ -56,7 +56,7 @@ public class WindowCoveringFactory implements ClusterFunctionFactory {
 	}
 
 	@Override
-	public String getMatchingPropertyName(String attributeName) {
+	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		return propertiesMapping.get(attributeName);
 	}
 

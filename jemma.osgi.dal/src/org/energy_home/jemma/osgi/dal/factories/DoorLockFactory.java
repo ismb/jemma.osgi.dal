@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.energy_home.dal.functions.DoorLock;
 import org.energy_home.jemma.ah.hac.IAppliance;
 import org.energy_home.jemma.ah.hac.lib.AttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
@@ -19,11 +20,11 @@ import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.functions.BooleanControl;
 import org.osgi.service.dal.functions.data.BooleanData;
 
-public class BooleanControlDoorLockFactory implements ClusterFunctionFactory {
+public class DoorLockFactory implements ClusterFunctionFactory {
 
 	Map<String,String> propertiesMapping;
 	
-	public BooleanControlDoorLockFactory()
+	public DoorLockFactory()
 	{
 		propertiesMapping=new HashMap<String, String>();
 		propertiesMapping.put("LockState",BooleanControl.PROPERTY_DATA);
@@ -37,12 +38,11 @@ public class BooleanControlDoorLockFactory implements ClusterFunctionFactory {
 		d.put(Function.SERVICE_UID, getFunctionUID(appliance));
 		
 		d.put(Function.SERVICE_OPERATION_NAMES, new String[]{
-				BooleanControl.OPERATION_REVERSE,
-				BooleanControl.OPERATION_SET_TRUE,
-				BooleanControl.OPERATION_SET_FALSE});
-		d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{BooleanControl.PROPERTY_DATA});
+				DoorLock.OPERATION_OPEN,
+				DoorLock.OPERATION_CLOSE});
+		d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{DoorLock.PROPERTY_STATUS});
 		return FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
-				new String[]{Function.class.getName(),BooleanControl.class.getName()}, 
+				new String[]{Function.class.getName(),DoorLock.class.getName()}, 
 				new DoorLockDALAdapter(appliance.getPid(), endPointId, appliancesProxy), 
 				d);		
 	}

@@ -18,12 +18,13 @@ import org.energy_home.jemma.ah.hac.IAttributeValuesListener;
 import org.energy_home.jemma.ah.hac.IEndPoint;
 import org.energy_home.jemma.ah.hac.IServiceCluster;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
-import org.energy_home.jemma.osgi.dal.factories.BooleanControlDoorLockFactory;
+import org.energy_home.jemma.osgi.dal.factories.DoorLockFactory;
 import org.energy_home.jemma.osgi.dal.factories.BooleanControlOnOffFactory;
 import org.energy_home.jemma.osgi.dal.factories.ColorControlFactory;
 import org.energy_home.jemma.osgi.dal.factories.EnergyMeterSimpleMeteringFactory;
 import org.energy_home.jemma.osgi.dal.factories.TemperatureMeterThermostatFactory;
 import org.energy_home.jemma.osgi.dal.factories.WhiteGoodApplianceControlFactory;
+import org.energy_home.jemma.osgi.dal.factories.WindowCoveringFactory;
 import org.energy_home.jemma.osgi.dal.impl.BaseDALAdapter;
 import org.energy_home.jemma.osgi.dal.utils.IDConverters;
 import org.osgi.framework.BundleContext;
@@ -42,8 +43,6 @@ import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-//TODO: handle deactivate: unregister all dal services
 
 public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesListener{
 
@@ -65,7 +64,8 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		addClusterFunctionFactory(new TemperatureMeterThermostatFactory());
 		addClusterFunctionFactory(new WhiteGoodApplianceControlFactory());
 		addClusterFunctionFactory(new ColorControlFactory());
-		addClusterFunctionFactory(new BooleanControlDoorLockFactory());
+		addClusterFunctionFactory(new DoorLockFactory());
+		addClusterFunctionFactory(new WindowCoveringFactory());
 		
 		functions=new HashMap<String,List<ServiceRegistration>>();
 		devices=new HashMap<String,ServiceRegistration>();

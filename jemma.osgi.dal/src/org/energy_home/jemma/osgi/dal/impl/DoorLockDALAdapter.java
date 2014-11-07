@@ -1,5 +1,7 @@
 package org.energy_home.jemma.osgi.dal.impl;
 
+import org.energy_home.dal.functions.DoorLock;
+import org.energy_home.dal.functions.data.DoorLockData;
 import org.energy_home.jemma.ah.cluster.zigbee.closures.DoorLockServer;
 import org.energy_home.jemma.ah.hac.IAttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
@@ -16,9 +18,9 @@ import org.osgi.service.dal.functions.data.BooleanData;
  * @author Ivan Grimaldi (grimaldi@ismb.it)
  *
  */
-public class DoorLockDALAdapter extends BaseDALAdapter implements BooleanControl {
+public class DoorLockDALAdapter extends BaseDALAdapter implements DoorLock {
 
-	private static String DOORLOCKCLUSTER = "org.energy_home.jemma.ah.cluster.zigbee.closures.DoorLockServer";
+	private static String WINDOWCOVERINGFACTORY = "org.energy_home.jemma.ah.zigbee.windowcovering";
 
 	public DoorLockDALAdapter(String appliancePid,Integer endPointId,IAppliancesProxy appliancesProxy)
 	{
@@ -42,67 +44,11 @@ public class DoorLockDALAdapter extends BaseDALAdapter implements BooleanControl
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public BooleanData getData() throws DeviceException {
-		Short data = null;
-		
-		try {
-			data=getCluster().getLockState(appliancesProxy.getRequestContext(true));
-			
-		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(), e.getCause());
-		}
-
-		return new BooleanData(System.currentTimeMillis(), null, data==1?false:true);
-	}
-
-	@Override
-	public void setData(boolean data) throws UnsupportedOperationException, IllegalStateException, DeviceException,
-			IllegalArgumentException {
-		throw new UnsupportedOperationException("Unimplemented method");
-	}
-
-	@Override
-	public void reverse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
-		
-		try {
-			BooleanData state=getData();
-			if(state.value==true)
-			{
-				setFalse();
-			}else{
-				setTrue();
-			}
-		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(), e.getCause());
-		}
-
-	}
-
-	@Override
-	public void setTrue() throws UnsupportedOperationException, IllegalStateException, DeviceException {
-		try {
-			getCluster().execUnlockDoor("0",appliancesProxy.getRequestContext(true));
-		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(), e.getCause());
-		}
-
-	}
-
-	@Override
-	public void setFalse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
-		try {
-			getCluster().execLockDoor("1",appliancesProxy.getRequestContext(true));
-		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(), e.getCause());
-		}
-
-	}
+	
 
 	@Override
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue value) {
-		return new BooleanData(value.getTimestamp(), null, value.getValue().equals("1")?false:true);
+		return new DoorLockData(System.currentTimeMillis(), null, value.getValue().equals("1")?DoorLockData.STATUS_CLOSED:DoorLockData.STATUS_OPEN);
 	}
 
 	
@@ -114,7 +60,44 @@ public class DoorLockDALAdapter extends BaseDALAdapter implements BooleanControl
 	
 	private DoorLockServer getCluster()
 	{
-		return (DoorLockServer)this.appliancesProxy.getAppliance(appliancePid).getEndPoint(endPointId).getServiceCluster(DOORLOCKCLUSTER);
+		return (DoorLockServer)this.appliancesProxy.getAppliance(appliancePid).getEndPoint(endPointId).getServiceCluster(WINDOWCOVERINGFACTORY);
+	}
+
+	@Override
+	public void open() throws DeviceException {
+		try {
+			getCluster().execUnlockDoor("0",appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(), e.getCause());
+		}
+
+		
+	}
+
+	@Override
+	public void close() throws DeviceException {
+		try {
+			getCluster().execLockDoor("1",appliancesProxy.getRequestContext(true));
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(), e.getCause());
+		}
+
+		
+	}
+
+	@Override
+	public DoorLockData getStatus() throws DeviceException {
+		Short data = null;
+		
+		try {
+			data=getCluster().getLockState(appliancesProxy.getRequestContext(true));
+			
+		} catch (Exception e) {
+			throw new DeviceException(e.getMessage(), e.getCause());
+		}
+
+		return new DoorLockData(System.currentTimeMillis(), null, data==1?DoorLockData.STATUS_CLOSED:DoorLockData.STATUS_OPEN);
+		
 	}
 
 }

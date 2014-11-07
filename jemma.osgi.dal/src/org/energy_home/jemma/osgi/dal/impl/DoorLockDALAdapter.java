@@ -20,7 +20,7 @@ import org.osgi.service.dal.functions.data.BooleanData;
  */
 public class DoorLockDALAdapter extends BaseDALAdapter implements DoorLock {
 
-	private static String WINDOWCOVERINGFACTORY = "org.energy_home.jemma.ah.zigbee.windowcovering";
+	private static String DOORLOCKSERVER = "org.energy_home.jemma.ah.cluster.zigbee.closures.DoorLockServer";
 
 	public DoorLockDALAdapter(String appliancePid,Integer endPointId,IAppliancesProxy appliancesProxy)
 	{
@@ -60,7 +60,7 @@ public class DoorLockDALAdapter extends BaseDALAdapter implements DoorLock {
 	
 	private DoorLockServer getCluster()
 	{
-		return (DoorLockServer)this.appliancesProxy.getAppliance(appliancePid).getEndPoint(endPointId).getServiceCluster(WINDOWCOVERINGFACTORY);
+		return (DoorLockServer)this.appliancesProxy.getAppliance(appliancePid).getEndPoint(endPointId).getServiceCluster(DOORLOCKSERVER);
 	}
 
 	@Override

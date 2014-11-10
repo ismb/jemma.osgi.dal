@@ -31,6 +31,7 @@ public class EnergyMeterSimpleMeteringFactory implements ClusterFunctionFactory 
 		propertiesMapping.put("IstantaneousDemand", Meter.PROPERTY_CURRENT);
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		Dictionary d=new Hashtable();
@@ -40,13 +41,34 @@ public class EnergyMeterSimpleMeteringFactory implements ClusterFunctionFactory 
 		
 		d.put(Function.SERVICE_OPERATION_NAMES, new String[0]);
 		d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{Meter.PROPERTY_CURRENT,Meter.PROPERTY_TOTAL});
-		d.put(Meter.SERVICE_FLOW, Meter.FLOW_IN);
+		
+		switch(getCategory(appliance))
+		{
+			case 14: //it's a PV meter
+				d.put(Meter.SERVICE_FLOW, Meter.FLOW_OUT);
+				break;
+			default:
+				d.put(Meter.SERVICE_FLOW, Meter.FLOW_IN);
+		
+		}
+		
+		
+		EnergyMeterDALAdapter adapter=new EnergyMeterDALAdapter(appliance.getPid(), endPointId, appliancesProxy);
+		adapter.setServiceProperties(d);
+		
 		return FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
 				new String[]{Function.class.getName(),Meter.class.getName()}, 
-				new EnergyMeterDALAdapter(appliance.getPid(), endPointId, appliancesProxy), 
+				adapter, 
 				d);		
 	}
 
+	private int getCategory(IAppliance app)
+	{
+		String category=(String)app.getConfiguration().get("ah.category.pid");
+		Integer cat=Integer.parseInt(category);
+		return cat;
+	}
+	
 	@Override
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.metering.SimpleMeteringServer";

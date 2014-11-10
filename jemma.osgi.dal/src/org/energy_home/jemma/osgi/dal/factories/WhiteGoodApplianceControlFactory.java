@@ -55,7 +55,6 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		fridgeAttributesMap.put(ApplianceControlServer.ATTR_SuperCoolMode_NAME,Fridge.PROPERTY_SUPERCOOLMODE);
 		fridgeAttributesMap.put(ApplianceControlServer.ATTR_SuperFreezeMode_NAME,Fridge.PROPERTY_SUPERFREEZE);
 		
-		String category=(String)appliance.getConfiguration().get("ah.category.pid");
 		ServiceRegistration reg=null;
 		Dictionary d=new Hashtable();
 		d.put(Function.SERVICE_DEVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));

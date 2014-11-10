@@ -22,6 +22,8 @@ import org.energy_home.jemma.osgi.dal.factories.DoorLockFactory;
 import org.energy_home.jemma.osgi.dal.factories.BooleanControlOnOffFactory;
 import org.energy_home.jemma.osgi.dal.factories.ColorControlFactory;
 import org.energy_home.jemma.osgi.dal.factories.EnergyMeterSimpleMeteringFactory;
+import org.energy_home.jemma.osgi.dal.factories.LevelControlFactory;
+import org.energy_home.jemma.osgi.dal.factories.PowerProfileFactory;
 import org.energy_home.jemma.osgi.dal.factories.TemperatureMeterThermostatFactory;
 import org.energy_home.jemma.osgi.dal.factories.WhiteGoodApplianceControlFactory;
 import org.energy_home.jemma.osgi.dal.factories.WindowCoveringFactory;
@@ -66,6 +68,8 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		addClusterFunctionFactory(new ColorControlFactory());
 		addClusterFunctionFactory(new DoorLockFactory());
 		addClusterFunctionFactory(new WindowCoveringFactory());
+		addClusterFunctionFactory(new PowerProfileFactory());
+		addClusterFunctionFactory(new LevelControlFactory());
 		
 		functions=new HashMap<String,List<ServiceRegistration>>();
 		devices=new HashMap<String,ServiceRegistration>();

@@ -1,7 +1,10 @@
 package org.energy_home.jemma.osgi.dal.impl;
 
 import java.math.BigDecimal;
+import java.util.Dictionary;
 
+import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer;
+import org.energy_home.jemma.ah.cluster.zigbee.metering.SimpleMeteringServer;
 import org.energy_home.jemma.ah.hac.IAttributeValue;
 import org.energy_home.jemma.ah.hac.lib.AttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
@@ -19,6 +22,7 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 
 	private Integer divisor=null;
 	private Integer multiplier=null;
+	private Dictionary properties;
 	
 	private static String SIMPLEMETERINGCLUSTER="org.energy_home.jemma.ah.cluster.zigbee.metering.SimpleMeteringServer";
 	
@@ -40,8 +44,7 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 
 	@Override
 	public Object getServiceProperty(String propName) {
-		// TODO Auto-generated method stub
-		return null;
+		return properties.get(propName);
 	}
 
 	public Integer getDivisor() throws Exception {
@@ -111,10 +114,17 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 	public LevelData getTotal() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		BigDecimal result=null;
 		long total;
+		//According to meter type obtained from SERVICE_FLOW property, the correct cluster method is called
 		try {
-			total=(long)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, SIMPLEMETERINGCLUSTER,
-					"getCurrentSummationDelivered", 
-					createParams(SIMPLEMETERINGCLUSTER, "getCurrentSummationDelivered", new String[0]));
+			if(properties.get(Meter.SERVICE_FLOW).equals(Meter.FLOW_OUT))
+			{
+				//it's a Production meter meter
+				total=getCluster().getCurrentSummationReceived(appliancesProxy.getRequestContext(true));
+				
+			}else{
+				//it's a consumption meter
+				total=getCluster().getCurrentSummationDelivered(appliancesProxy.getRequestContext(true));
+			}
 			result=this.scaleValues(new BigDecimal(total));
 		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(),e.getCause());
@@ -167,6 +177,15 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 	public void updateApplianceSubscriptions() {
 		// TODO Auto-generated method stub
 		
-	} 
+	}
+
+	public void setServiceProperties(Dictionary d) {
+		this.properties=d;
+	}
+	
+	private SimpleMeteringServer getCluster()
+	{
+		return (SimpleMeteringServer) appliancesProxy.getAppliance(appliancePid).getEndPoint(endPointId).getServiceCluster(SIMPLEMETERINGCLUSTER);
+	}
 
 }

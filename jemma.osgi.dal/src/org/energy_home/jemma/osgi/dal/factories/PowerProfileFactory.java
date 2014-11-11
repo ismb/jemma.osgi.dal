@@ -38,16 +38,15 @@ public class PowerProfileFactory implements ClusterFunctionFactory {
 		
 		d.put(Function.SERVICE_OPERATION_NAMES, 
 				new String[]{
-				/*
-				BooleanControl.OPERATION_REVERSE,
-				BooleanControl.OPERATION_SET_TRUE,
-				BooleanControl.OPERATION_SET_FALSE
-				*/});
+				PowerProfileFunction.OPERATION_SCHEDULEENRGYPHASES});
 		d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{
 				PowerProfileFunction.PROPERTY_ENERGYREMOTE,
 				PowerProfileFunction.PROPERTY_MULTIPLESCHEDULING,
 				PowerProfileFunction.PROPERTY_SCHEDULEMODE,
-				PowerProfileFunction.PROPERTY_TOTALPROFILENUM
+				PowerProfileFunction.PROPERTY_TOTALPROFILENUM,
+				PowerProfileFunction.PROPERTY_CONSTRAINTS,
+				PowerProfileFunction.PROPERTY_STATE,
+				PowerProfileFunction.PROPERTY_POWEPROFILEPHASES
 				});
 		return FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
 				new String[]{Function.class.getName(),PowerProfileFunction.class.getName()}, 

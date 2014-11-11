@@ -1,21 +1,22 @@
 package org.energy_home.jemma.osgi.dal.impl;
 
-import java.util.Map;
-
 import org.energy_home.dal.functions.PowerProfileFunction;
+import org.energy_home.dal.functions.data.PowerProfileConstraintsData;
+import org.energy_home.dal.functions.data.PowerProfileData;
+import org.energy_home.dal.functions.data.PowerProfilePhasesData;
+import org.energy_home.dal.functions.type.ScheduledPhaseAttribute;
+import org.energy_home.jemma.ah.cluster.zigbee.eh.PowerProfileResponse;
 import org.energy_home.jemma.ah.cluster.zigbee.eh.PowerProfileScheduleConstraintsResponse;
 import org.energy_home.jemma.ah.cluster.zigbee.eh.PowerProfileServer;
-import org.energy_home.jemma.ah.hac.ApplianceException;
+import org.energy_home.jemma.ah.cluster.zigbee.eh.PowerProfileStateResponse;
+import org.energy_home.jemma.ah.cluster.zigbee.eh.ScheduledPhase;
 import org.energy_home.jemma.ah.hac.IAttributeValue;
-import org.energy_home.jemma.ah.hac.ServiceClusterException;
-import org.energy_home.jemma.ah.hac.lib.AttributeValue;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
-import org.energy_home.jemma.osgi.dal.ClusterFunctionFactory;
+import org.energy_home.jemma.osgi.dal.utils.DataConverters;
 import org.osgi.service.dal.DeviceException;
 import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.OperationMetadata;
 import org.osgi.service.dal.PropertyMetadata;
-import org.osgi.service.dal.functions.BooleanControl;
 import org.osgi.service.dal.functions.data.BooleanData;
 
 /**
@@ -128,21 +129,53 @@ public class PowerProfileDALAdapter extends BaseDALAdapter implements PowerProfi
 		
 	}
 
-	public void getConstraints(Short profileId) throws DeviceException {
+	//FIXME: not working
+	public PowerProfileConstraintsData getConstraints(Short profileId) throws DeviceException {
+		
 		PowerProfileScheduleConstraintsResponse resp=null;
 		try {
 			resp=getCluster().execPowerProfileScheduleConstraintsRequest(profileId, appliancesProxy.getRequestContext(true));
+			return DataConverters.toPowerProfileConstraintsData(resp);
 		} catch(Exception e)
 		{
 			throw new DeviceException(e.getMessage(),e.getCause());
 		}
-		
+	}
+	
+	public PowerProfileData getPowerProfileState() throws DeviceException
+	{
+		try{
+			PowerProfileStateResponse resp=getCluster().execPowerProfileStateRequest(this.appliancesProxy.getRequestContext(true));
+			return DataConverters.toPowerProfileData(resp);
+		} catch(Exception e)
+		{
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
 	}
 
-	@Override
-	public void getConstraints() {
-		// TODO Auto-generated method stub
-		
+	public PowerProfilePhasesData getPowerProfilePhases(Short PowerProfileID) throws DeviceException
+	{
+
+		try{
+			PowerProfileResponse resp=getCluster().execPowerProfileRequest(PowerProfileID, appliancesProxy.getRequestContext(true));
+			return DataConverters.toPowerProfilePhasesData(resp);
+		} catch(Exception e)
+		{
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
 	}
+	
+	public void scheduleEnergyPhases(Short PowerProfileID,ScheduledPhaseAttribute[] phases) throws DeviceException
+	{
+
+		try{
+			getCluster().execEnergyPhasesScheduleNotification(PowerProfileID, DataConverters.toScheduledPhases(phases), appliancesProxy.getRequestContext(true));
+			
+		} catch(Exception e)
+		{
+			throw new DeviceException(e.getMessage(),e.getCause());
+		}
+	}
+
 
 }

@@ -33,9 +33,8 @@ public class ColorControlFactory implements ClusterFunctionFactory {
 		d.put(Function.SERVICE_DEVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		d.put(Function.SERVICE_UID, getFunctionUID(appliance));
 		
-		d.put(Function.SERVICE_OPERATION_NAMES, new String[]{
-				ColorControl.OPERATION_SETCOLOR});
-		d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{});
+		d.put(Function.SERVICE_OPERATION_NAMES, new String[]{});
+		d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{ColorControl.PROPERTY_HS});
 		return FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
 				new String[]{Function.class.getName(),ColorControl.class.getName()}, 
 				new ColorControlDALAdapter(appliance.getPid(), endPointId, appliancesProxy), 

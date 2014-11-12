@@ -48,7 +48,8 @@ public class DoorLockDALAdapter extends BaseDALAdapter implements DoorLock {
 
 	@Override
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue value) {
-		return new DoorLockData(System.currentTimeMillis(), null, value.getValue().equals("1")?DoorLockData.STATUS_CLOSED:DoorLockData.STATUS_OPEN);
+		Short state=(Short)value.getValue();
+		return new DoorLockData(System.currentTimeMillis(), null, state.equals(Short.valueOf((short) 1))?DoorLockData.STATUS_CLOSED:DoorLockData.STATUS_OPEN);
 	}
 
 	

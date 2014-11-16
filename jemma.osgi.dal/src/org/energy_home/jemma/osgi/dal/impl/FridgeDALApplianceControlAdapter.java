@@ -37,50 +37,44 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue attributeValue) {
 		
 		FunctionData data=null;
-		switch(attributeName)
+		if(ApplianceControlServer.ATTR_TemperatureTarget0_NAME.equals(attributeName))
 		{
-			case ApplianceControlServer.ATTR_TemperatureTarget0_NAME:
-				int value=(int)(attributeValue.getValue());
-				data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(value));
-				break;
-			case ApplianceControlServer.ATTR_TemperatureTarget1_NAME:
-				int value2=(int)(attributeValue.getValue());
-				//value adjustment
-				int realValue=value2-65536;
-				data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(realValue));
-				break;
-			case ApplianceControlServer.ATTR_NormalMode_NAME:
-				Boolean normalMode=(Boolean) attributeValue.getValue();
-				data=new BooleanData(attributeValue.getTimestamp(),null,normalMode.booleanValue());
-				break;
-			case ApplianceControlServer.ATTR_EcoMode_NAME:
-				Boolean ecoMode=(Boolean) attributeValue.getValue();
-				//boolean ecomode= (boolean) attributeValue.getValue();
-				data=new BooleanData(attributeValue.getTimestamp(),null,ecoMode.booleanValue());
-				break;
-			case ApplianceControlServer.ATTR_SuperCoolMode_NAME:
-				Boolean supercool=(Boolean) attributeValue.getValue();
-				data=new BooleanData(attributeValue.getTimestamp(),null,supercool.booleanValue());
-				break;
-			case ApplianceControlServer.ATTR_SuperFreezeMode_NAME:
-				Boolean superfreeze=(Boolean) attributeValue.getValue();
-				data=new BooleanData(attributeValue.getTimestamp(),null,superfreeze.booleanValue());
-				break;
-			case ApplianceControlServer.ATTR_HolidayMode_NAME:
-				Boolean holiday=(Boolean) attributeValue.getValue();
-				data=new BooleanData(attributeValue.getTimestamp(),null,holiday.booleanValue());
-				break;
-			case ApplianceControlServer.ATTR_IceParty_NAME:
-				Boolean iceparty=(Boolean) attributeValue.getValue();
-				data=new BooleanData(attributeValue.getTimestamp(),null,iceparty.booleanValue());
-				break;
-					
-			default:
+			int value=(Integer)(attributeValue.getValue());
+			data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(value));
+		}else if(ApplianceControlServer.ATTR_TemperatureTarget1_NAME.equals(attributeName))
+		{
+			int value2=(Integer)(attributeValue.getValue());
+			//value adjustment
+			int realValue=value2-65536;
+			data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(realValue));
+		}else if(ApplianceControlServer.ATTR_NormalMode_NAME.equals(attributeName))
+		{
+			Boolean normalMode=(Boolean) attributeValue.getValue();
+			data=new BooleanData(attributeValue.getTimestamp(),null,normalMode.booleanValue());
+		}else if(ApplianceControlServer.ATTR_EcoMode_NAME.equals(attributeName))
+		{
+			Boolean ecoMode=(Boolean) attributeValue.getValue();
+			//boolean ecomode= (boolean) attributeValue.getValue();
+			data=new BooleanData(attributeValue.getTimestamp(),null,ecoMode.booleanValue());
+		}else if(ApplianceControlServer.ATTR_SuperCoolMode_NAME.equals(attributeName))
+		{
+			Boolean supercool=(Boolean) attributeValue.getValue();
+			data=new BooleanData(attributeValue.getTimestamp(),null,supercool.booleanValue());
+		}else if(ApplianceControlServer.ATTR_SuperFreezeMode_NAME.equals(attributeName))
+		{
+			Boolean superfreeze=(Boolean) attributeValue.getValue();
+			data=new BooleanData(attributeValue.getTimestamp(),null,superfreeze.booleanValue());
+		}else if(ApplianceControlServer.ATTR_HolidayMode_NAME.equals(attributeName))
+		{
+			Boolean holiday=(Boolean) attributeValue.getValue();
+			data=new BooleanData(attributeValue.getTimestamp(),null,holiday.booleanValue());
+		}else if(ApplianceControlServer.ATTR_IceParty_NAME.equals(attributeName))
+		{
+			Boolean iceparty=(Boolean) attributeValue.getValue();
+			data=new BooleanData(attributeValue.getTimestamp(),null,iceparty.booleanValue());
+		}else{
 				return null;
 		}
-	
-		
-		
 		return data;
 	}
 

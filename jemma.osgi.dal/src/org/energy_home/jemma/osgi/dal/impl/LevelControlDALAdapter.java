@@ -78,7 +78,7 @@ public class LevelControlDALAdapter extends BaseDALAdapter implements MultiLevel
 	public void setData(BigDecimal level) throws UnsupportedOperationException, IllegalStateException, DeviceException,
 			IllegalArgumentException {
 		try{
-			getCluster().execMoveToLevel(level.shortValue(), 10, appliancesProxy.getRequestContext(true));
+			getCluster().execMoveToLevel(level.shortValue(), 10, appliancesProxy.getRequestContext(false));
 		}catch(Exception e)
 		{
 			throw new DeviceException(e.getMessage(),e.getCause());

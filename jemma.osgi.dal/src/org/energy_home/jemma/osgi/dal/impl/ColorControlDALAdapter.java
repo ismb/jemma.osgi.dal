@@ -45,7 +45,7 @@ public class ColorControlDALAdapter extends BaseDALAdapter implements ColorContr
 		try {
 			getCluster().execMoveToHueAndSaturation(hue, saturation, 10, appliancesProxy.getRequestContext(true));
 			//getCluster().execStepColor((int)(xy[0]*254), (int)(xy[1]*254), 10, appliancesProxy.getRequestContext(true));
-		} catch (ApplianceException | ServiceClusterException e) {
+		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(),e.getCause());
 		}
 	}

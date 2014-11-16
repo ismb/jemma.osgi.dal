@@ -55,6 +55,12 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		fridgeAttributesMap.put(ApplianceControlServer.ATTR_SuperCoolMode_NAME,Fridge.PROPERTY_SUPERCOOLMODE);
 		fridgeAttributesMap.put(ApplianceControlServer.ATTR_SuperFreezeMode_NAME,Fridge.PROPERTY_SUPERFREEZE);
 		
+		ovenAttributesMap.put(ApplianceControlServer.ATTR_TemperatureTarget0_NAME, Oven.PROPERTY_TEMPERATURE);
+		ovenAttributesMap.put(ApplianceControlServer.ATTR_CycleTarget0_NAME, Oven.PROPERTY_CYCLE);
+		ovenAttributesMap.put(ApplianceControlServer.ATTR_StartTime_NAME, Oven.PROPERTY_STARTTIME);
+		ovenAttributesMap.put(ApplianceControlServer.ATTR_FinishTime_NAME, Oven.PROPERTY_FINISHTIME);
+		ovenAttributesMap.put(ApplianceControlServer.ATTR_RemainingTime_NAME, Oven.PROPERTY_REMAININGTIME);
+		
 		ServiceRegistration reg=null;
 		Dictionary d=new Hashtable();
 		d.put(Function.SERVICE_DEVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
@@ -86,9 +92,6 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 				break;
 			case 38: //It's the oven
 				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{ 
-						"execStartCycle",
-						"execStopCycle",
-						"execPauseCycle",
 						"execOverloadPauseResume",
 						"execOverloadPause",
 						"execOverloadWarning"});

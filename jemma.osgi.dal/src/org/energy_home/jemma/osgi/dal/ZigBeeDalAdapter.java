@@ -8,6 +8,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.energy_home.jemma.ah.hac.IAppliance;
 import org.energy_home.jemma.ah.hac.IApplianceDescriptor;
@@ -53,8 +54,8 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	
 	private static final Logger LOG = LoggerFactory.getLogger( ZigBeeDalAdapter.class );
 	
-	private Map<String,List<ServiceRegistration>> functions;
-	private Map<String,ServiceRegistration> devices;
+	private ConcurrentHashMap<String,List<ServiceRegistration>> functions;
+	private ConcurrentHashMap<String,ServiceRegistration> devices;
 	
 	private Map<String,ClusterFunctionFactory> factories;
 	
@@ -71,8 +72,8 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		addClusterFunctionFactory(new PowerProfileFactory());
 		addClusterFunctionFactory(new LevelControlFactory());
 		
-		functions=new HashMap<String,List<ServiceRegistration>>();
-		devices=new HashMap<String,ServiceRegistration>();
+		functions=new ConcurrentHashMap<String,List<ServiceRegistration>>();
+		devices=new ConcurrentHashMap<String,ServiceRegistration>();
 	}
 	
 	private void addClusterFunctionFactory(ClusterFunctionFactory factory)
@@ -157,13 +158,22 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		//unregister Device service
 		if(devices.containsKey(appliancePid))
 		{
-			devices.get(appliancePid).unregister();
+			ServiceRegistration reg=devices.get(appliancePid);
+			if(reg!=null)
+				synchronized (reg) {
+					reg.unregister();
+				}
 		}
 		
 		//unregister function services
 		for(ServiceRegistration reg:functions.get(appliancePid))
 		{
-			reg.unregister();
+			if(reg!=null){
+				synchronized(reg)
+				{
+					reg.unregister();
+				}
+			}
 		}
 	}
 
@@ -191,15 +201,27 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		
 		ServiceRegistration reg=devices.get(appliance.getPid());
 		
+		if(reg==null)
+		{
+			LOG.error("No service reference for appliance: "+appliance.getPid());
+			return;
+		}
+		
 		try{
 			//try to update subscription for all functions associated to this device
 			for(ServiceRegistration freg:functions.get(appliance.getPid()))
 			{
-				BundleContext ctx=FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-				ServiceReference ref=freg.getReference();
-				BaseDALAdapter functionAdapter=ctx.getService(ref);
-				functionAdapter.updateApplianceSubscriptions();
-				ctx.ungetService(ref);
+				if(freg!=null)
+				{
+					synchronized (freg) {
+						BundleContext ctx=FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+						ServiceReference ref=freg.getReference();
+						BaseDALAdapter functionAdapter=ctx.getService(ref);
+						functionAdapter.updateApplianceSubscriptions();
+						ctx.ungetService(ref);
+					}
+				}
+				
 			}
 		}catch(Exception e)
 		{
@@ -216,20 +238,30 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 
 		//update service properties if availability changed
 		ServiceReference ref=reg.getReference();
+		if(ref==null)
+		{
+			LOG.error("Error getting service reference for appliance PID"+appliance.getPid());
+			return;
+		}
 		if(!(ref.getProperty(Device.SERVICE_STATUS).equals(d.get(Device.SERVICE_STATUS))))
 		{
-			reg.setProperties(d);
+			synchronized(reg)
+			{
+				reg.setProperties(d);
+			}
 			
 			//inform the framework that the service have been modified
 			ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, ref);
-			
-			Dictionary props = new Hashtable();
-			props.put(EventConstants.EVENT, serviceEvent);
-			props.put(EventConstants.SERVICE, ref);
-			props.put(EventConstants.SERVICE_PID, ref.getProperty(Constants.SERVICE_PID));
-			props.put(EventConstants.SERVICE_ID, ref.getProperty(Constants.SERVICE_ID));
-			props.put(EventConstants.SERVICE_OBJECTCLASS, ref.getProperty(Constants.OBJECTCLASS)); 
-			eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+			synchronized(ref)
+			{
+				Dictionary props = new Hashtable();
+				props.put(EventConstants.EVENT, serviceEvent);
+				props.put(EventConstants.SERVICE, ref);
+				props.put(EventConstants.SERVICE_PID, ref.getProperty(Constants.SERVICE_PID));
+				props.put(EventConstants.SERVICE_ID, ref.getProperty(Constants.SERVICE_ID));
+				props.put(EventConstants.SERVICE_OBJECTCLASS, ref.getProperty(Constants.OBJECTCLASS)); 
+				eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+			}
 		}
 		//release service reference
 		FrameworkUtil.getBundle(this.getClass()).getBundleContext().ungetService(ref);
@@ -285,14 +317,18 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 			FunctionData newValue=adapter.getMatchingPropertyValue(attributeName, attributeValue);
 			if(newValue!=null)
 			{
-				Dictionary properties=new Hashtable();
-				properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, functionUid);
-				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, this.factories.get(clusterName).getMatchingPropertyName(attributeName,appliancesProxy.getAppliance(appliancePid)));
-				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, newValue);
-				
-				Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,properties);
-	
-				this.eventAdmin.postEvent(evt);
+				try{
+					Dictionary properties=new Hashtable();
+					properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, functionUid);
+					properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, this.factories.get(clusterName).getMatchingPropertyName(attributeName,appliancesProxy.getAppliance(appliancePid)));
+					properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, newValue);
+					
+					Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,properties);
+		
+					this.eventAdmin.postEvent(evt);
+				}catch(Exception e){
+					LOG.error("Error creating event for attribute "+attributeName);
+				}
 			}
 			ctx.ungetService(functionRefs[0]);
 			

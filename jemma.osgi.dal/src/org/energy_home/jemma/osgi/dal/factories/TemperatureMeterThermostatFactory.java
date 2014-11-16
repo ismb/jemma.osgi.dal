@@ -38,7 +38,7 @@ public class TemperatureMeterThermostatFactory implements ClusterFunctionFactory
 
 		d.put(Function.SERVICE_DEVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		d.put(Function.SERVICE_UID, getFunctionUID(appliance));
-		
+
 		d.put(Function.SERVICE_OPERATION_NAMES, new String[0]);
 		d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{MultiLevelSensor.PROPERTY_DATA});
 		return FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(

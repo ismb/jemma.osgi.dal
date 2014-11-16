@@ -37,38 +37,33 @@ public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapt
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue attributeValue) {
 		
 		FunctionData data=null;
-		switch(attributeName)
+		if(ApplianceControlServer.ATTR_TemperatureTarget0_NAME.equals(attributeName))
 		{
-			case ApplianceControlServer.ATTR_TemperatureTarget0_NAME:
-				int value=(int)(attributeValue.getValue());
-				data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(value));
-				break;
-			case ApplianceControlServer.ATTR_CycleTarget0_NAME:
-				Short v=(Short)(attributeValue.getValue());
-				data=new LevelData(attributeValue.getTimestamp(), null, CYCLEUNIT, new BigDecimal(v));
-				break;
-			case ApplianceControlServer.ATTR_Spin_NAME:
-				Short v2=(Short)(attributeValue.getValue());
-				data=new LevelData(attributeValue.getTimestamp(), null, SPINUNIT, new BigDecimal(v2));
-				break;
-			case ApplianceControlServer.ATTR_StartTime_NAME:
-				TimeAttribute t=DataConverters.toTimeAttribute((int) attributeValue.getValue());
-				data=new TimeData(attributeValue.getTimestamp(), null,t);
-				break;
-			case ApplianceControlServer.ATTR_FinishTime_NAME:
-				TimeAttribute t2=DataConverters.toTimeAttribute((int) attributeValue.getValue());
-				data=new TimeData(attributeValue.getTimestamp(), null,t2);
-				break;
-			case ApplianceControlServer.ATTR_RemainingTime_NAME:
-				TimeAttribute t3=DataConverters.toTimeAttribute((int) attributeValue.getValue());
-				data=new TimeData(attributeValue.getTimestamp(), null,t3);
-				break;
-			default:
-				return null;
+			int value=(Integer)(attributeValue.getValue());
+			data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(value));
+		}else if(ApplianceControlServer.ATTR_CycleTarget0_NAME.equals(attributeName))
+		{
+			Short v=(Short)(attributeValue.getValue());
+			data=new LevelData(attributeValue.getTimestamp(), null, CYCLEUNIT, new BigDecimal(v));
+		}else if(ApplianceControlServer.ATTR_Spin_NAME.equals(attributeName))
+		{
+			Short v2=(Short)(attributeValue.getValue());
+			data=new LevelData(attributeValue.getTimestamp(), null, SPINUNIT, new BigDecimal(v2));
+		}else if(ApplianceControlServer.ATTR_StartTime_NAME.equals(attributeName))
+		{
+			TimeAttribute t=DataConverters.toTimeAttribute((Integer) attributeValue.getValue());
+			data=new TimeData(attributeValue.getTimestamp(), null,t);
+		}else if(ApplianceControlServer.ATTR_FinishTime_NAME.equals(attributeName))
+		{
+			TimeAttribute t2=DataConverters.toTimeAttribute((Integer) attributeValue.getValue());
+			data=new TimeData(attributeValue.getTimestamp(), null,t2);
+		}else if(ApplianceControlServer.ATTR_RemainingTime_NAME.equals(attributeName))
+		{
+			TimeAttribute t3=DataConverters.toTimeAttribute((Integer) attributeValue.getValue());
+			data=new TimeData(attributeValue.getTimestamp(), null,t3);
+		}else{
+			return null;
 		}
-	
-		
-		
 		return data;
 	}
 
@@ -198,7 +193,7 @@ public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapt
 	public void execOverloadPauseResume()  throws DeviceException {
 		try {
 			getCluster().execOverloadPauseResume(appliancesProxy.getRequestContext(true));
-		} catch (ApplianceException | ServiceClusterException e) {
+		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(), e.getCause());
 		}
 		
@@ -208,7 +203,7 @@ public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapt
 	public void execOverloadPause()  throws DeviceException{
 		try {
 			getCluster().execOverloadPause(appliancesProxy.getRequestContext(true));
-		} catch (ApplianceException | ServiceClusterException e) {
+		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(), e.getCause());
 		}
 		
@@ -218,7 +213,7 @@ public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapt
 	public void execOverloadWarning() throws DeviceException {
 		try {
 			getCluster().execOverloadWarning(((short) 4),appliancesProxy.getRequestContext(true));
-		} catch (ApplianceException | ServiceClusterException e) {
+		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(), e.getCause());
 		}
 		

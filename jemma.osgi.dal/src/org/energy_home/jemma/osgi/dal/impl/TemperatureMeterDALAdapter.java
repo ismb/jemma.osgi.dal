@@ -28,7 +28,7 @@ public class TemperatureMeterDALAdapter extends BaseDALAdapter implements MultiL
 		
 		if("LocalTemperature".equals(attributeName))
 		{
-			int value=(int)(attributeValue.getValue());
+			int value=(Integer)(attributeValue.getValue());
 			//divide by 100
 			levelData=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(value).divide(new BigDecimal(100)));
 		}
@@ -64,7 +64,7 @@ public class TemperatureMeterDALAdapter extends BaseDALAdapter implements MultiL
 		BigDecimal result=null;
 		int value;
 		try {
-			value=(int)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, THERMOSTATCLUSTER,
+			value=(Integer)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, THERMOSTATCLUSTER,
 					"getLocalTemperature", 
 					createParams(THERMOSTATCLUSTER, "getLocalTemperature", new String[0]));
 		} catch (Exception e) {

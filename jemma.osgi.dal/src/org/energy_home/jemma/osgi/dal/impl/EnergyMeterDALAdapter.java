@@ -96,7 +96,7 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 		BigDecimal result=null;
 		int instantaneousDemand;
 		try {
-			instantaneousDemand=(int)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, SIMPLEMETERINGCLUSTER,
+			instantaneousDemand=(Integer)this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, SIMPLEMETERINGCLUSTER,
 					"getIstantaneousDemand", 
 					createParams(SIMPLEMETERINGCLUSTER, "getIstantaneousDemand", new String[0]));
 			result=this.scaleValues(new BigDecimal(instantaneousDemand));
@@ -159,12 +159,12 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 		
 			if(attributeName=="CurrentSummationDelivered")
 			{
-				long value=(long)(attributeValue.getValue());
+				long value=(Long)(attributeValue.getValue());
 				
 					levelData=new LevelData(attributeValue.getTimestamp(), null, Units.WATT_PER_HOUR, scaleValues(new BigDecimal(value)));
 			}else if(attributeName=="IstantaneousDemand")
 			{
-				int value=(int)(attributeValue.getValue());
+				int value=(Integer)(attributeValue.getValue());
 				levelData=new LevelData(attributeValue.getTimestamp(), null, Units.WATT, scaleValues(new BigDecimal(value)));
 			}
 		} catch (Exception e) {

@@ -36,7 +36,7 @@ public abstract class BaseApplianceControlDalAdapter extends BaseDALAdapter {
 		ApplianceControlServer cluster=getCluster();
 		try {
 			cluster.execWriteFunctions(new WriteAttributeRecord[]{record}, appliancesProxy.getRequestContext(true));
-		} catch (ApplianceException | ServiceClusterException e) {
+		} catch (Exception e) {
 			throw new DeviceException(e.getMessage(),e.getCause());
 		}
 	}

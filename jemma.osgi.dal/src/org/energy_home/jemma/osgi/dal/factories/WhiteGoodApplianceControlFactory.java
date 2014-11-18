@@ -91,10 +91,7 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						d);	
 				break;
 			case 38: //It's the oven
-				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{ 
-						"execOverloadPauseResume",
-						"execOverloadPause",
-						"execOverloadWarning"});
+				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{});
 				d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{
 						Oven.PROPERTY_CYCLE,
 						Oven.PROPERTY_TEMPERATURE,

@@ -194,19 +194,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void updateDeviceServiceProperties(IAppliance appliance) {
 		
-		Dictionary d=new Hashtable();
-		
-		d.put(Device.SERVICE_DRIVER, "ZigBee");
-		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
-		
-		ServiceRegistration reg=devices.get(appliance.getPid());
-		
-		if(reg==null)
-		{
-			LOG.error("No service reference for appliance: "+appliance.getPid());
-			return;
-		}
-		
+		/*
 		try{
 			//try to update subscription for all functions associated to this device
 			for(ServiceRegistration freg:functions.get(appliance.getPid()))
@@ -217,7 +205,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 						BundleContext ctx=FrameworkUtil.getBundle(this.getClass()).getBundleContext();
 						ServiceReference ref=freg.getReference();
 						BaseDALAdapter functionAdapter=ctx.getService(ref);
-						functionAdapter.updateApplianceSubscriptions();
+						//functionAdapter.updateApplianceSubscriptions();
 						ctx.ungetService(ref);
 					}
 				}
@@ -226,8 +214,13 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		}catch(Exception e)
 		{
 			LOG.error("error updating attributes subscription",e);
-		}
+		}*/
 		
+				
+		Dictionary d=new Hashtable();
+		
+		d.put(Device.SERVICE_DRIVER, "ZigBee");
+		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		//change the DAL Device Service status property according to Device avialability
 		if(appliance.isAvailable())
 		{
@@ -235,36 +228,57 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		}else{
 			d.put(Device.SERVICE_STATUS, Device.STATUS_OFFLINE);
 		}
-
+	
 		//update service properties if availability changed
-		ServiceReference ref=reg.getReference();
-		if(ref==null)
+		ServiceRegistration reg=devices.get(appliance.getPid());
+		synchronized(reg)
 		{
-			LOG.error("Error getting service reference for appliance PID"+appliance.getPid());
-			return;
-		}
-		if(!(ref.getProperty(Device.SERVICE_STATUS).equals(d.get(Device.SERVICE_STATUS))))
-		{
-			synchronized(reg)
+		
+			if(reg==null)
 			{
-				reg.setProperties(d);
+				LOG.error("No service reference for appliance: "+appliance.getPid());
+				return;
 			}
-			
-			//inform the framework that the service have been modified
-			ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, ref);
+			ServiceReference ref=reg.getReference();
+			if(ref==null)
+			{
+				LOG.error("Error getting service reference for appliance PID"+appliance.getPid());
+				return;
+			}
+			Dictionary props = null;
 			synchronized(ref)
 			{
-				Dictionary props = new Hashtable();
-				props.put(EventConstants.EVENT, serviceEvent);
-				props.put(EventConstants.SERVICE, ref);
-				props.put(EventConstants.SERVICE_PID, ref.getProperty(Constants.SERVICE_PID));
-				props.put(EventConstants.SERVICE_ID, ref.getProperty(Constants.SERVICE_ID));
-				props.put(EventConstants.SERVICE_OBJECTCLASS, ref.getProperty(Constants.OBJECTCLASS)); 
-				eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+				if(!(ref.getProperty(Device.SERVICE_STATUS).equals(d.get(Device.SERVICE_STATUS))))
+				{					
+					reg.setProperties(d);
+				}
+				
+			/*			The event posting is not needed
+						
+						//release service reference
+						FrameworkUtil.getBundle(this.getClass()).getBundleContext().ungetService(ref);
+						
+						ref=reg.getReference();
+						//inform the framework that the service have been modified
+						ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, ref);
+						
+						props = new Hashtable();
+						props.put(EventConstants.EVENT, serviceEvent);
+						props.put(EventConstants.SERVICE, ref);
+						props.put(EventConstants.SERVICE_PID, ref.getProperty(Constants.SERVICE_PID));
+						props.put(EventConstants.SERVICE_ID, ref.getProperty(Constants.SERVICE_ID));
+						props.put(EventConstants.SERVICE_OBJECTCLASS, ref.getProperty(Constants.OBJECTCLASS));
+					}
+					if(props!=null)
+					{
+						eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
+					}
+					*/
+					//release service reference
 			}
+			FrameworkUtil.getBundle(this.getClass()).getBundleContext().ungetService(ref);
 		}
-		//release service reference
-		FrameworkUtil.getBundle(this.getClass()).getBundleContext().ungetService(ref);
+		
 	}
 
 	@Override
@@ -312,15 +326,24 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 				return;
 			}
 			
+			String matchingPropertyName = this.factories.get(clusterName).getMatchingPropertyName(attributeName,appliancesProxy.getAppliance(appliancePid));
+			
+			if(matchingPropertyName==null)
+			{
+				LOG.error("Unhandled property, cannot find a name matching");
+				return;
+			}
+			
 			ClusterDALAdapter adapter= ctx.getService(functionRefs[0]);
 			
 			FunctionData newValue=adapter.getMatchingPropertyValue(attributeName, attributeValue);
+			
 			if(newValue!=null)
 			{
 				try{
 					Dictionary properties=new Hashtable();
 					properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, functionUid);
-					properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, this.factories.get(clusterName).getMatchingPropertyName(attributeName,appliancesProxy.getAppliance(appliancePid)));
+					properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, matchingPropertyName);
 					properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, newValue);
 					
 					Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,properties);

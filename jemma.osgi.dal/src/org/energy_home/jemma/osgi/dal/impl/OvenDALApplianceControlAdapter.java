@@ -2,17 +2,12 @@ package org.energy_home.jemma.osgi.dal.impl;
 
 import java.math.BigDecimal;
 
-import javax.lang.model.element.ExecutableElement;
-
 import org.energy_home.dal.functions.Oven;
-import org.energy_home.dal.functions.WashingMachine;
 import org.energy_home.dal.functions.data.TimeData;
 import org.energy_home.dal.functions.type.TimeAttribute;
 import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer;
-import org.energy_home.jemma.ah.cluster.zigbee.eh.WriteAttributeRecord;
-import org.energy_home.jemma.ah.hac.ApplianceException;
+import org.energy_home.jemma.ah.cluster.zigbee.eh.SignalStateResponse;
 import org.energy_home.jemma.ah.hac.IAttributeValue;
-import org.energy_home.jemma.ah.hac.ServiceClusterException;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.utils.DataConverters;
 import org.osgi.service.dal.DeviceException;
@@ -20,6 +15,7 @@ import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.OperationMetadata;
 import org.osgi.service.dal.PropertyMetadata;
 import org.osgi.service.dal.Units;
+import org.osgi.service.dal.functions.data.BooleanData;
 import org.osgi.service.dal.functions.data.LevelData;
 
 public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapter implements Oven{
@@ -218,5 +214,21 @@ public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapt
 		}
 		
 	}
+
+	@Override
+	public BooleanData getRemoteControl() throws DeviceException {
+		try {
+			SignalStateResponse resp=getCluster().execSignalState(appliancesProxy.getRequestContext(true));
+			if(resp.RemoteEnableFlags==0)
+			{
+				return new BooleanData(System.currentTimeMillis(), null, false);
+			}else{
+				return new BooleanData(System.currentTimeMillis(), null, true);
+			}
+		} catch (Exception e){
+			throw new DeviceException(e.getMessage(), e.getCause());
+		}
+	}
+
 
 }

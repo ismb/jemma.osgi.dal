@@ -82,7 +82,8 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						WashingMachine.PROPERTY_SPIN,
 						WashingMachine.PROPERTY_STARTTIME,
 						WashingMachine.PROPERTY_FINISHTIME,
-						WashingMachine.PROPERTY_REMAININGTIME
+						WashingMachine.PROPERTY_REMAININGTIME,
+						WashingMachine.PROPERTY_REMOTECONTROL
 						});
 				
 				reg=FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
@@ -91,13 +92,19 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						d);	
 				break;
 			case 38: //It's the oven
-				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{});
+				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{
+						"execStartCycle",
+						"execStopCycle",
+						"execOverloadPauseResume",
+						"execOverloadPause"
+				});
 				d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{
 						Oven.PROPERTY_CYCLE,
 						Oven.PROPERTY_TEMPERATURE,
 						Oven.PROPERTY_STARTTIME,
 						Oven.PROPERTY_FINISHTIME,
-						Oven.PROPERTY_REMAININGTIME
+						Oven.PROPERTY_REMAININGTIME,
+						Oven.PROPERTY_REMOTECONTROL
 						});
 				
 				reg=FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(

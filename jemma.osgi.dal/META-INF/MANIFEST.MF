@@ -19,5 +19,5 @@ Import-Package: org.energy_home.dal.functions,
  org.osgi.service.dal.functions,
  org.osgi.service.dal.functions.data,
  org.osgi.service.event;version="1.3.0",
- org.slf4j;version="1.7.7"
+ org.slf4j;version="[1.6,2)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

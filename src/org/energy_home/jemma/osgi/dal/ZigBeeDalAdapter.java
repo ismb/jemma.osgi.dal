@@ -132,7 +132,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		//the service status must be initially set STATUS_PROCESSING
 		d.put(Device.SERVICE_STATUS, Device.STATUS_PROCESSING);
 		devices.put(appliance.getPid(),FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
-				Device.class,
+				Device.class.getName(),
 				new JemmaDevice(),
 				d));
 		

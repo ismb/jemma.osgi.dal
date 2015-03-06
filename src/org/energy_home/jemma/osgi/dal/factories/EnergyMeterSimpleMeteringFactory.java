@@ -27,7 +27,10 @@ public class EnergyMeterSimpleMeteringFactory implements ClusterFunctionFactory 
 	public EnergyMeterSimpleMeteringFactory()
 	{
 		propertiesMapping=new HashMap<String,String>();
+		//for consumption meter
 		propertiesMapping.put("CurrentSummationDelivered", Meter.PROPERTY_TOTAL);
+		//for production meter
+		propertiesMapping.put("CurrentSummationReceived", Meter.PROPERTY_TOTAL);
 		propertiesMapping.put("IstantaneousDemand", Meter.PROPERTY_CURRENT);
 	}
 	

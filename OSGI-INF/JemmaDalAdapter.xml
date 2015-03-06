@@ -4,7 +4,9 @@
    <service>
       <provide interface="org.energy_home.jemma.ah.hac.IApplicationService"/>
       <provide interface="org.energy_home.jemma.ah.hac.IAttributeValuesListener"/>
+      <provide interface="org.energy_home.jemma.ah.hac.IManagedAppliance"/>
    </service>
    <reference bind="bindAppliancesProxy" cardinality="1..1" interface="org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy" name="IAppliancesProxy" policy="dynamic" unbind="unbindAppliancesProxy"/>
    <reference bind="bindEventAdmin" cardinality="1..1" interface="org.osgi.service.event.EventAdmin" name="EventAdmin" policy="dynamic" unbind="unbindEventAdmin"/>
+   <reference bind="bindIConnectionAdminService" cardinality="1..1" interface="org.energy_home.jemma.ah.hac.lib.ext.IConnectionAdminService" name="IConnectionAdminService" policy="static" unbind="unbindIConnectionAdminService"/>
 </scr:component>

@@ -1,6 +1,5 @@
 package org.energy_home.jemma.osgi.dal;
 
-import java.awt.Frame;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -10,6 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlClient;
+import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer;
+import org.energy_home.jemma.ah.hac.ApplianceException;
+import org.energy_home.jemma.ah.hac.HacException;
 import org.energy_home.jemma.ah.hac.IAppliance;
 import org.energy_home.jemma.ah.hac.IApplianceDescriptor;
 import org.energy_home.jemma.ah.hac.IApplicationEndPoint;
@@ -17,49 +20,85 @@ import org.energy_home.jemma.ah.hac.IApplicationService;
 import org.energy_home.jemma.ah.hac.IAttributeValue;
 import org.energy_home.jemma.ah.hac.IAttributeValuesListener;
 import org.energy_home.jemma.ah.hac.IEndPoint;
+import org.energy_home.jemma.ah.hac.IEndPointRequestContext;
 import org.energy_home.jemma.ah.hac.IServiceCluster;
+import org.energy_home.jemma.ah.hac.ServiceClusterException;
+import org.energy_home.jemma.ah.hac.lib.Appliance;
+import org.energy_home.jemma.ah.hac.lib.ApplianceDescriptor;
+import org.energy_home.jemma.ah.hac.lib.EndPoint;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
-import org.energy_home.jemma.osgi.dal.factories.DoorLockFactory;
+import org.energy_home.jemma.ah.hac.lib.ext.IConnectionAdminService;
 import org.energy_home.jemma.osgi.dal.factories.BooleanControlOnOffFactory;
 import org.energy_home.jemma.osgi.dal.factories.ColorControlFactory;
+import org.energy_home.jemma.osgi.dal.factories.DoorLockFactory;
 import org.energy_home.jemma.osgi.dal.factories.EnergyMeterSimpleMeteringFactory;
 import org.energy_home.jemma.osgi.dal.factories.LevelControlFactory;
 import org.energy_home.jemma.osgi.dal.factories.PowerProfileFactory;
 import org.energy_home.jemma.osgi.dal.factories.TemperatureMeterThermostatFactory;
 import org.energy_home.jemma.osgi.dal.factories.WhiteGoodApplianceControlFactory;
 import org.energy_home.jemma.osgi.dal.factories.WindowCoveringFactory;
-import org.energy_home.jemma.osgi.dal.impl.BaseDALAdapter;
 import org.energy_home.jemma.osgi.dal.utils.IDConverters;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.component.ComponentContext;
 import org.osgi.service.dal.Device;
 import org.osgi.service.dal.Function;
 import org.osgi.service.dal.FunctionData;
 import org.osgi.service.dal.FunctionEvent;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.osgi.service.event.EventConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesListener{
+import sun.util.logging.resources.logging;
+
+public class ZigBeeDalAdapter extends Appliance implements IApplicationService,IAttributeValuesListener,ApplianceControlClient{
 
 	private IAppliancesProxy appliancesProxy;
 	private EventAdmin eventAdmin;
 	
 	private static final Logger LOG = LoggerFactory.getLogger( ZigBeeDalAdapter.class );
 	
+	private ComponentContext componentContext;
+	
 	private ConcurrentHashMap<String,List<ServiceRegistration>> functions;
 	private ConcurrentHashMap<String,ServiceRegistration> devices;
 	
 	private Map<String,ClusterFunctionFactory> factories;
 	
-	public ZigBeeDalAdapter(){
+	//Parameters to configure this class as appliance with exposed endpoints. Usefult to get notification from Server Clusters
+	private static Dictionary applianceConfiguration=new Hashtable();
+	protected static final String FRIENDLY_NAME = "DAL_Appliance";
+	protected static final String TYPE = "org.energy_home.jemma.ah.appliance.dal";
+	protected static final String PID="ah.app.dal.notification.receiver";
+	protected static final String END_POINT_TYPE = "org.energy_home.jemma.ah.appliance.dal.ep";
+	
+	private static ApplianceDescriptor descriptor;
+	protected static final String DEVICE_TYPE = null;
+	private EndPoint dalNotificationReceiverEndPoint;
+	
+	
+	//I need connection admin service to perform bind on appliances
+	private IConnectionAdminService connectionAdmin;
+	
+	
+	static{
+		applianceConfiguration.put(IAppliance.APPLIANCE_NAME_PROPERTY, FRIENDLY_NAME);
+		descriptor = new ApplianceDescriptor(TYPE, DEVICE_TYPE, FRIENDLY_NAME);
+	}
+	
+	public ZigBeeDalAdapter() throws ApplianceException{
+		
+		//prepare virtual appliance that will receive notifications
+		super(PID,applianceConfiguration);
+		dalNotificationReceiverEndPoint=addEndPoint(new EndPoint(END_POINT_TYPE));
+		dalNotificationReceiverEndPoint.registerCluster(ApplianceControlClient.class.getName(), this);	
+		setAvailability(true);
+	
+		
 		//add factories
 		factories=new HashMap<String,ClusterFunctionFactory>();
 		addClusterFunctionFactory(new BooleanControlOnOffFactory());
@@ -76,12 +115,23 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		devices=new ConcurrentHashMap<String,ServiceRegistration>();
 	}
 	
+	
+	public void activate(ComponentContext context)
+	{
+		this.componentContext=context;
+		//try to bind this appliance with all appliances
+		try {
+			this.connectionAdmin.addBindRule("(&(pid1="+PID+")(pid2=*))");
+		} catch (InvalidSyntaxException e) {
+			LOG.error("ERROR binding dal notification listener appliance");
+		}
+	}
+	
 	private void addClusterFunctionFactory(ClusterFunctionFactory factory)
 	{
 		this.factories.put(factory.getMatchingCluster(), factory);
 	}
 	
-	@Override
 	public IServiceCluster[] getServiceClusters() {
 		// nothing to be done
 		return null;
@@ -92,8 +142,6 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	 * @param endPoint
 	 * @param appliance
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Override
 	public void notifyApplianceAdded(IApplicationEndPoint endPoint, IAppliance appliance) {
 		if(!appliance.isDriver())
 		{
@@ -120,6 +168,7 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 					//register function service
 					addFunctionRegistration(appliance.getPid(),factories.get(cluster.getName()).createFunctionService(appliance,
 							ep.getId(), appliancesProxy));
+					
 				}
 			}
 		}
@@ -177,7 +226,6 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		}
 	}
 
-	@Override 
 	public void notifyApplianceAvailabilityUpdated(IAppliance appliance) {
 		LOG.info("Appliance availability updated");
 		if(!appliance.isDriver())
@@ -194,29 +242,6 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void updateDeviceServiceProperties(IAppliance appliance) {
 		
-		/*
-		try{
-			//try to update subscription for all functions associated to this device
-			for(ServiceRegistration freg:functions.get(appliance.getPid()))
-			{
-				if(freg!=null)
-				{
-					synchronized (freg) {
-						BundleContext ctx=FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-						ServiceReference ref=freg.getReference();
-						BaseDALAdapter functionAdapter=ctx.getService(ref);
-						//functionAdapter.updateApplianceSubscriptions();
-						ctx.ungetService(ref);
-					}
-				}
-				
-			}
-		}catch(Exception e)
-		{
-			LOG.error("error updating attributes subscription",e);
-		}*/
-		
-				
 		Dictionary d=new Hashtable();
 		
 		d.put(Device.SERVICE_DRIVER, "ZigBee");
@@ -231,6 +256,9 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	
 		//update service properties if availability changed
 		ServiceRegistration reg=devices.get(appliance.getPid());
+		if(reg==null){
+			return;
+		}
 		synchronized(reg)
 		{
 		
@@ -253,39 +281,19 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 					reg.setProperties(d);
 				}
 				
-			/*			The event posting is not needed
-						
-						//release service reference
-						FrameworkUtil.getBundle(this.getClass()).getBundleContext().ungetService(ref);
-						
-						ref=reg.getReference();
-						//inform the framework that the service have been modified
-						ServiceEvent serviceEvent=new ServiceEvent(ServiceEvent.MODIFIED, ref);
-						
-						props = new Hashtable();
-						props.put(EventConstants.EVENT, serviceEvent);
-						props.put(EventConstants.SERVICE, ref);
-						props.put(EventConstants.SERVICE_PID, ref.getProperty(Constants.SERVICE_PID));
-						props.put(EventConstants.SERVICE_ID, ref.getProperty(Constants.SERVICE_ID));
-						props.put(EventConstants.SERVICE_OBJECTCLASS, ref.getProperty(Constants.OBJECTCLASS));
-					}
-					if(props!=null)
-					{
-						eventAdmin.postEvent(new Event("org/osgi/framework/ServiceEvent/MODIFIED",props)) ;
-					}
-					*/
-					//release service reference
 			}
+			//release service reference
 			FrameworkUtil.getBundle(this.getClass()).getBundleContext().ungetService(ref);
 		}
 		
 	}
 
-	@Override
 	public void notifyAttributeValue(String appliancePid, Integer endPointId, String clusterName, String attributeName,
 			IAttributeValue attributeValue) {
 		
-		LOG.info(attributeValue.toString());
+		LOG.info("Received an attribute {} from {}",
+				attributeName,
+				clusterName);
 		if(!(this.factories.containsKey(clusterName)))
 		{
 			LOG.error("No DAL adapter is defined for cluster "+endPointId);
@@ -330,11 +338,11 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 			
 			if(matchingPropertyName==null)
 			{
-				LOG.error("Unhandled property, cannot find a name matching");
+				LOG.error("Unhandled property, cannot find a name matching {}",attributeName);
 				return;
 			}
 			
-			ClusterDALAdapter adapter= ctx.getService(functionRefs[0]);
+			ClusterDALAdapter adapter= (ClusterDALAdapter) ctx.getService(functionRefs[0]);
 			
 			FunctionData newValue=adapter.getMatchingPropertyValue(attributeName, attributeValue);
 			
@@ -369,7 +377,13 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 		{
 			unregisterApplianceServices(pid);
 		}
+		try {
+			connectionAdmin.removeBindRule(PID);
+		} catch (HacException e) {
+			LOG.error("Error removing bind rules in DAL adapter");
+		}
 	}
+	
 	
 	public void bindAppliancesProxy(IAppliancesProxy appliancesProxy)
 	{
@@ -390,4 +404,97 @@ public class ZigBeeDalAdapter implements IApplicationService,IAttributeValuesLis
 	{
 		this.eventAdmin=eventAdmin;
 	}
+
+	
+	public void bindIConnectionAdminService(IConnectionAdminService connectionAdminService)
+	{
+		this.connectionAdmin=connectionAdminService;
+	}
+	
+	public void unbindIConnectionAdminService(IConnectionAdminService connectionAdminService)
+	{
+		this.connectionAdmin=null;
+	}
+	
+	
+	//TODO evaluate how to re-implement this putting logic for client clusters in factories or functions
+	//Functions for implemented client clusters
+	public void execSignalStateNotification(short ApplianceStatus, short RemoteEnableFlags, int ApplianceStatus2,
+			IEndPointRequestContext context) throws ApplianceException, ServiceClusterException {
+		try {
+			IAppliance appliance=context.getPeerEndPoint().getAppliance();
+			//this is the specific method for appliancecontolserver
+			String clusterName=ApplianceControlServer.class.getName();
+			
+			//now get the function implementing service
+			String functionUid=this.factories.get(clusterName).getFunctionUID(appliance);
+			String filterString = "("+Function.SERVICE_UID+"="+functionUid+")";
+			ServiceReference[] functionRefs;
+		
+			functionRefs = (ServiceReference[]) componentContext.getBundleContext().getServiceReferences(
+				    Function.class.getName(),
+				    filterString);
+	
+		
+			if (null == functionRefs)
+			{
+				LOG.error("No function reference found");
+			    return; // no such services
+			}
+			
+			if(functionRefs.length!=1)
+			{
+				LOG.error("Invalid size ("+functionRefs.length+") for list of service references to function with UID:"+functionUid);
+				return;
+			}
+			
+			
+			ClusterDALAdapter adapter= (ClusterDALAdapter) componentContext.getBundleContext().getService(functionRefs[0]);
+			
+			FunctionData applianceStatusValue=adapter.getDataFromClusterNotification("ApplianceStatus", new Short(ApplianceStatus));
+			if(applianceStatusValue!=null)
+			{
+				postEvent(functionUid, "ApplianceStatus", applianceStatusValue );
+			}
+			
+			FunctionData remoteControlFlagValue=adapter.getDataFromClusterNotification("RemoteControl", new Short(RemoteEnableFlags));
+			if(applianceStatusValue!=null)
+			{
+				postEvent(functionUid, "RemoteControl", remoteControlFlagValue );
+			}
+						
+			componentContext.getBundleContext().ungetService(functionRefs[0]);
+			
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
+	private void postEvent(String functionUid,String propertyName,FunctionData propertyValue)
+	{
+		if(propertyValue!=null)
+		{
+			try{
+				Dictionary properties=new Hashtable();
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_UID, functionUid);
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_NAME, propertyName);
+				properties.put(FunctionEvent.PROPERTY_FUNCTION_PROPERTY_VALUE, propertyValue);
+				
+				Event evt=new Event(FunctionEvent.TOPIC_PROPERTY_CHANGED,properties);
+	
+				this.eventAdmin.postEvent(evt);
+			}catch(Exception e){
+				LOG.error("Error creating event for property "+propertyName);
+			}
+		}
+	}
+	
+	
+	public IApplianceDescriptor getDescriptor() {
+		return descriptor;
+	}
+
 }

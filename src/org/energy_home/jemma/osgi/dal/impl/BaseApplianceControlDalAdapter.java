@@ -1,13 +1,13 @@
 package org.energy_home.jemma.osgi.dal.impl;
 
+import java.math.BigDecimal;
+
 import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer;
 import org.energy_home.jemma.ah.cluster.zigbee.eh.WriteAttributeRecord;
-import org.energy_home.jemma.ah.hac.ApplianceException;
-import org.energy_home.jemma.ah.hac.IAttributeValue;
-import org.energy_home.jemma.ah.hac.ServiceClusterException;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.osgi.service.dal.DeviceException;
 import org.osgi.service.dal.FunctionData;
+import org.osgi.service.dal.functions.data.LevelData;
 
 public abstract class BaseApplianceControlDalAdapter extends BaseDALAdapter {
 
@@ -46,4 +46,19 @@ public abstract class BaseApplianceControlDalAdapter extends BaseDALAdapter {
 		return (ApplianceControlServer) appliancesProxy.getAppliance(appliancePid).getEndPoint(endPointId).getServiceCluster(APPLIANCECONTROLCLUSTER);
 	}
 
+	public FunctionData getDataFromClusterNotification(String notificationPropertyName,Object value){
+		FunctionData data=null;
+		if("ApplianceStatus".equals(notificationPropertyName))
+		{
+			data=new LevelData(System.currentTimeMillis(),null,"ApplianceStatus",
+					new BigDecimal((Short)value)); 
+		}else if("RemoteControl".equals(notificationPropertyName))
+		{
+			data=new LevelData(System.currentTimeMillis(),null,"RemoteControl",
+					new BigDecimal((Short)value)); 
+		}
+		
+		return data;
+	} 
+	
 }

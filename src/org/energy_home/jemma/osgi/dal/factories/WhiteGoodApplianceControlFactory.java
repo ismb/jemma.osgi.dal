@@ -11,6 +11,7 @@ import org.energy_home.dal.functions.WashingMachine;
 import org.energy_home.dal.functions.type.TimeAttribute;
 import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer;
 import org.energy_home.jemma.ah.hac.IAppliance;
+import org.energy_home.jemma.ah.hac.lib.Appliance;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.ClusterFunctionFactory;
 import org.energy_home.jemma.osgi.dal.impl.FridgeDALApplianceControlAdapter;

@@ -55,6 +55,18 @@ import org.slf4j.LoggerFactory;
 
 import sun.util.logging.resources.logging;
 
+/**
+ * This class is the main interface between Device Abstraction Layer and JEMMA.
+ * It registers itself as OSGi Declarative Service as:
+ * <ul>
+ * 	<li>IApplicationService to get notifications from JEMMA of configured or deleted appliances </li>
+ * 	<li>IAttributeValueListener to receive Attributes reportings from a device and make them become OSGi DAL events</li>
+ *  <li>IManagedAppliance to be a virtual appliance exposing Client Clusters which are needed to receive commands from appliances</li>
+ * </ul>
+ * 
+ * @author Ivan Grimaldi (ivan.grimaldi@telecomitalia.it)
+ *
+ */
 public class ZigBeeDalAdapter extends Appliance implements IApplicationService,IAttributeValuesListener,ApplianceControlClient{
 
 	private IAppliancesProxy appliancesProxy;
@@ -92,13 +104,14 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 	
 	public ZigBeeDalAdapter() throws ApplianceException{
 		
-		//prepare virtual appliance that will receive notifications
+		//prepare virtual appliance that will receive notifications commands
 		super(PID,applianceConfiguration);
 		dalNotificationReceiverEndPoint=addEndPoint(new EndPoint(END_POINT_TYPE));
 		dalNotificationReceiverEndPoint.registerCluster(ApplianceControlClient.class.getName(), this);	
 		setAvailability(true);
 	
 		
+		//TODO: evaluate dynamic discovery of factories using Declarative services
 		//add factories
 		factories=new HashMap<String,ClusterFunctionFactory>();
 		addClusterFunctionFactory(new BooleanControlOnOffFactory());
@@ -120,6 +133,7 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 	{
 		this.componentContext=context;
 		//try to bind this appliance with all appliances
+		//required to get command must be received by client clusters
 		try {
 			this.connectionAdmin.addBindRule("(&(pid1="+PID+")(pid2=*))");
 		} catch (InvalidSyntaxException e) {
@@ -190,6 +204,11 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		
 	}
 
+	/**
+	 * Internal method storing service registrations for future use (e.g. service de-registration when appliance is removed)
+	 * @param appliancePid
+	 * @param registration
+	 */
 	private void addFunctionRegistration(String appliancePid,ServiceRegistration registration) {
 		if(!functions.containsKey(appliancePid))
 		{
@@ -198,11 +217,17 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		functions.get(appliancePid).add(registration);
 	}
 
-	@Override
+	/**
+	 * Method called by JEMMA when an appliance is removed
+	 */
 	public void notifyApplianceRemoved(IAppliance appliance) {
 		unregisterApplianceServices(appliance.getPid());
 	}
 
+	/**
+	 * Internal method to unregister all services related with an appliance
+	 * @param appliancePid
+	 */
 	private void unregisterApplianceServices(String appliancePid) {
 		//unregister Device service
 		if(devices.containsKey(appliancePid))
@@ -226,6 +251,9 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		}
 	}
 
+	/**
+	 * Method invoked by JEMMA when the availability of an appliance has changed
+	 */
 	public void notifyApplianceAvailabilityUpdated(IAppliance appliance) {
 		LOG.info("Appliance availability updated");
 		if(!appliance.isDriver())
@@ -239,7 +267,10 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		}
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	/**
+	 * Updates device services properties (e.g. Device status) according to the content of the IAppliance class
+	 * @param appliance
+	 */
 	private void updateDeviceServiceProperties(IAppliance appliance) {
 		
 		Dictionary d=new Hashtable();
@@ -288,6 +319,10 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		
 	}
 
+	/**
+	 * Method invoked by JEMMA when an attribute is received from an appliance through ZigBee AttributeNotification
+	 * services
+	 */
 	public void notifyAttributeValue(String appliancePid, Integer endPointId, String clusterName, String attributeName,
 			IAttributeValue attributeValue) {
 		
@@ -303,11 +338,13 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		if(appliance==null)
 		{
 			LOG.error("The notified value arrives from a non-existing appliance");
+			return;
 		}
 		
 		//update device service properties status if they are changed: JEMMA is lazy notifying availability changes 
 		updateDeviceServiceProperties(appliancesProxy.getAppliance(appliancePid));
 		
+		//resolve function service that related to that attribute
 		String functionUid=this.factories.get(clusterName).getFunctionUID(appliance);
 		
 		String filterString = "("+Function.SERVICE_UID+"="+functionUid+")";
@@ -334,6 +371,7 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 				return;
 			}
 			
+			//get the DAL property name related to this attribute from the factory related to the cluster which generated the attribute 
 			String matchingPropertyName = this.factories.get(clusterName).getMatchingPropertyName(attributeName,appliancesProxy.getAppliance(appliancePid));
 			
 			if(matchingPropertyName==null)
@@ -344,8 +382,10 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 			
 			ClusterDALAdapter adapter= (ClusterDALAdapter) ctx.getService(functionRefs[0]);
 			
+			//now convert the attribute to a FunctionData using the resolved Function service
 			FunctionData newValue=adapter.getMatchingPropertyValue(attributeName, attributeValue);
 			
+			//and post the event through OSGi eventAdmin service
 			if(newValue!=null)
 			{
 				try{
@@ -364,8 +404,7 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 			ctx.ungetService(functionRefs[0]);
 			
 		} catch (InvalidSyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.error("Error creating event for AttributeNotification,{}",e);
 		}
 		
 	}
@@ -423,7 +462,10 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 			IEndPointRequestContext context) throws ApplianceException, ServiceClusterException {
 		try {
 			IAppliance appliance=context.getPeerEndPoint().getAppliance();
-			//this is the specific method for appliancecontolserver
+			
+			//the WG ApplianceControlServer calls the GW applianceControlClient
+			//so a Function implementing interactions with ApplianceControlServer
+			//must be resolved
 			String clusterName=ApplianceControlServer.class.getName();
 			
 			//now get the function implementing service
@@ -447,10 +489,10 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 				LOG.error("Invalid size ("+functionRefs.length+") for list of service references to function with UID:"+functionUid);
 				return;
 			}
-			
-			
+			//get the service
 			ClusterDALAdapter adapter= (ClusterDALAdapter) componentContext.getBundleContext().getService(functionRefs[0]);
 			
+			//invoke method that create FunctionData according to received property and post the event
 			FunctionData applianceStatusValue=adapter.getDataFromClusterNotification("ApplianceStatus", new Short(ApplianceStatus));
 			if(applianceStatusValue!=null)
 			{
@@ -466,8 +508,7 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 			componentContext.getBundleContext().ungetService(functionRefs[0]);
 			
 		} catch (Throwable e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOG.error("Error receivign appliance status and remote control flags, {}",e);
 		}
 		
 		

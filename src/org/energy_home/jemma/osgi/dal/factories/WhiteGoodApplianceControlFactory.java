@@ -139,7 +139,7 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						d);	
 				break;
 
-			case 50: //It's the dishWasher
+			case 46: //It's the dishWasher
 				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{
 						"execStartCycle",
 						"execStopCycle",
@@ -179,7 +179,7 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "Oven");
 			case 39: //Fridge
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "Fridge");
-			case 50: //DishWasher
+			case 46: //DishWasher
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "DishWasher");
 			default: 
 				//unmanaged appliance
@@ -205,6 +205,8 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 				return ovenAttributesMap.get(attributeName);
 			case 39: //Fridge
 				return fridgeAttributesMap.get(attributeName);
+			case 46: //DishWasher
+				return dishWasherAttributesMap.get(attributeName);
 			default:
 				return null;
 		}

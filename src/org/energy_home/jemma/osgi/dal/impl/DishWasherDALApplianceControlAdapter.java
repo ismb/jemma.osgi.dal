@@ -37,8 +37,7 @@ public class DishWasherDALApplianceControlAdapter extends BaseApplianceControlDa
 		{
 			Short v=(Short)(attributeValue.getValue());
 			data=new LevelData(attributeValue.getTimestamp(), null, CYCLEUNIT, new BigDecimal(v));
-		}
-		if(ApplianceControlServer.ATTR_StartTime_NAME.equals(attributeName))
+		}else if(ApplianceControlServer.ATTR_StartTime_NAME.equals(attributeName))
 		{
 			TimeAttribute t=DataConverters.toTimeAttribute((Integer) attributeValue.getValue());
 			data=new TimeData(attributeValue.getTimestamp(), null,t);

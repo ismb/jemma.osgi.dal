@@ -30,7 +30,6 @@ public class DoorLockFactory implements ClusterFunctionFactory {
 		propertiesMapping.put("LockState",BooleanControl.PROPERTY_DATA);
 	}
 	
-	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		Dictionary d=new Hashtable();
 		
@@ -47,17 +46,14 @@ public class DoorLockFactory implements ClusterFunctionFactory {
 				d);		
 	}
 
-	@Override
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.closures.DoorLockServer";
 	}
 
-	@Override
 	public String getFunctionUID(IAppliance appliance) {
 		return IDConverters.getFunctionUid(appliance.getPid(), appliance.getConfiguration(),"DoorLock");
 	}
 
-	@Override
 	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		return propertiesMapping.get(attributeName);
 	}

@@ -30,7 +30,6 @@ public class LevelControlFactory implements ClusterFunctionFactory {
 		propertiesMapping.put("CurrentLevel", MultiLevelControl.PROPERTY_DATA);
 	}
 	
-	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		Dictionary d=new Hashtable();
 		
@@ -45,17 +44,14 @@ public class LevelControlFactory implements ClusterFunctionFactory {
 				d);		
 	}
 
-	@Override
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.general.LevelControlServer";
 	}
 
-	@Override
 	public String getFunctionUID(IAppliance appliance) {
 		return IDConverters.getFunctionUid(appliance.getPid(), appliance.getConfiguration(),"MultiLevelControl");
 	}
 
-	@Override
 	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		return propertiesMapping.get(attributeName);
 	}

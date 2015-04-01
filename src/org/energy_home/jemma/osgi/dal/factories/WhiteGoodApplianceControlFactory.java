@@ -168,7 +168,6 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		return reg;
 	}
 
-	@Override
 	public String getFunctionUID(IAppliance appliance) {
 		
 		switch(getCategory(appliance))
@@ -195,7 +194,6 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		return cat;
 	}
 	
-	@Override
 	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		switch(getCategory(appliance))
 		{
@@ -213,7 +211,6 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		
 	}
 
-	@Override
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer";
 	}

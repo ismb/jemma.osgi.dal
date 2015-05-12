@@ -194,6 +194,9 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
 		//the service status must be initially set STATUS_PROCESSING
 		d.put(Device.SERVICE_STATUS, Device.STATUS_PROCESSING);
+		d.put(Device.SERVICE_NAME,IDConverters.getDeviceName(appliance.getPid(), appliance.getConfiguration()));
+		
+		//added category from JEMMA in device's properties
 		String category=(String)appliance.getConfiguration().get("ah.category.pid");
 		d.put("ah.category.pid", category);
 		devices.put(appliance.getPid(),FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
@@ -279,9 +282,12 @@ public class ZigBeeDalAdapter extends Appliance implements IApplicationService,I
 		
 		d.put(Device.SERVICE_DRIVER, "ZigBee");
 		d.put(Device.SERVICE_UID, IDConverters.getDeviceUid(appliance.getPid(), appliance.getConfiguration()));
-		//change the DAL Device Service status property according to Device avialability
+		d.put(Device.SERVICE_NAME,IDConverters.getDeviceName(appliance.getPid(), appliance.getConfiguration()));
+		
 		String category=(String)appliance.getConfiguration().get("ah.category.pid");
 		d.put("ah.category.pid", category);
+		
+		//added category from JEMMA in device's properties
 		if(appliance.isAvailable())
 		{
 			d.put(Device.SERVICE_STATUS, Device.STATUS_ONLINE);

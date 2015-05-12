@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: JEMMA DAL Adapter
 Bundle-SymbolicName: org.energy_home.jemma.osgi.dal
-Bundle-Version: 1.0.1.qualifier
+Bundle-Version: 1.1.0.qualifier
 Export-Package: org.energy_home.jemma.osgi.dal,
  org.energy_home.jemma.osgi.dal.factories,
  org.energy_home.jemma.osgi.dal.impl,

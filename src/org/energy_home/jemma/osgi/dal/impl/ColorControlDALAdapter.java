@@ -22,19 +22,19 @@ public class ColorControlDALAdapter extends BaseDALAdapter implements ColorContr
 		super(appliancePid, endPointId, appliancesProxy);
 	}
 
-	@Override
+	
 	public PropertyMetadata getPropertyMetadata(String propertyName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public OperationMetadata getOperationMetadata(String operationName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public Object getServiceProperty(String propName) {
 		// TODO Auto-generated method stub
 		return null;
@@ -68,16 +68,10 @@ public class ColorControlDALAdapter extends BaseDALAdapter implements ColorContr
 		return (ColorControlServer) appliancesProxy.getAppliance(appliancePid).getEndPoint(endPointId).getServiceCluster(COLORCONTROLCLUSTER);
 	}
 
-	@Override
+	
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue attributeValue) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public void updateApplianceSubscriptions() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

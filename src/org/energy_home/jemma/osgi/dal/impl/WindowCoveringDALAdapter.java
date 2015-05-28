@@ -30,35 +30,28 @@ public class WindowCoveringDALAdapter extends BaseDALAdapter implements WindowCo
 		super(appliancePid,endPointId,appliancesProxy);
 	}
 
-	@Override
+	
 	public PropertyMetadata getPropertyMetadata(String propertyName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public OperationMetadata getOperationMetadata(String operationName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public Object getServiceProperty(String propName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 
-	@Override
+	
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue value) {
 		return new WindowCoveringData(System.currentTimeMillis(), null, (Short)value.getValue());
-	}
-
-	
-	@Override
-	public void updateApplianceSubscriptions() {
-		// TODO Auto-generated method stub
-		
 	}
 	
 	private WindowCoveringServer getCluster()
@@ -67,7 +60,7 @@ public class WindowCoveringDALAdapter extends BaseDALAdapter implements WindowCo
 	}
 
 
-	@Override
+	
 	public void openUp() throws DeviceException {
 		try{
 			getCluster().execUpOpen(appliancesProxy.getRequestContext(true));
@@ -77,7 +70,7 @@ public class WindowCoveringDALAdapter extends BaseDALAdapter implements WindowCo
 		}
 	}
 
-	@Override
+	
 	public void closeDown() throws DeviceException {
 		try{
 			getCluster().execDownClose(appliancesProxy.getRequestContext(true));
@@ -88,7 +81,7 @@ public class WindowCoveringDALAdapter extends BaseDALAdapter implements WindowCo
 		
 	}
 
-	@Override
+	
 	public WindowCoveringData getStatus() throws DeviceException {
 		try{
 			Short data = getCluster().getCurrentPositionLiftPercentage(appliancesProxy.getRequestContext(true));

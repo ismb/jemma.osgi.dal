@@ -2,6 +2,7 @@ package org.energy_home.jemma.osgi.dal.impl;
 
 import java.math.BigDecimal;
 
+import org.energy_home.dal.functions.DishWasher;
 import org.energy_home.dal.functions.Oven;
 import org.energy_home.dal.functions.data.TimeData;
 import org.energy_home.dal.functions.type.TimeAttribute;
@@ -18,13 +19,12 @@ import org.osgi.service.dal.Units;
 import org.osgi.service.dal.functions.data.BooleanData;
 import org.osgi.service.dal.functions.data.LevelData;
 
-public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapter implements Oven{
+public class DishWasherDALApplianceControlAdapter extends BaseApplianceControlDalAdapter implements DishWasher{
 
 	private static String ZIGBEETIMEUNIT="ZIGBEE_TIME";
-	private static String SPINUNIT="SPIN";
 	private static String CYCLEUNIT="CYCLE";
 	
-	public OvenDALApplianceControlAdapter(String appliancePid, Integer endPointId,
+	public DishWasherDALApplianceControlAdapter(String appliancePid, Integer endPointId,
 			IAppliancesProxy appliancesProxy) {
 		super(appliancePid, endPointId, appliancesProxy);
 	}
@@ -33,18 +33,10 @@ public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapt
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue attributeValue) {
 		
 		FunctionData data=null;
-		if(ApplianceControlServer.ATTR_TemperatureTarget0_NAME.equals(attributeName))
-		{
-			int value=(Integer)(attributeValue.getValue());
-			data=new LevelData(attributeValue.getTimestamp(), null, Units.DEGREE_CELSIUS, new BigDecimal(value));
-		}else if(ApplianceControlServer.ATTR_CycleTarget0_NAME.equals(attributeName))
+		if(ApplianceControlServer.ATTR_CycleTarget0_NAME.equals(attributeName))
 		{
 			Short v=(Short)(attributeValue.getValue());
 			data=new LevelData(attributeValue.getTimestamp(), null, CYCLEUNIT, new BigDecimal(v));
-		}else if(ApplianceControlServer.ATTR_Spin_NAME.equals(attributeName))
-		{
-			Short v2=(Short)(attributeValue.getValue());
-			data=new LevelData(attributeValue.getTimestamp(), null, SPINUNIT, new BigDecimal(v2));
 		}else if(ApplianceControlServer.ATTR_StartTime_NAME.equals(attributeName))
 		{
 			TimeAttribute t=DataConverters.toTimeAttribute((Integer) attributeValue.getValue());
@@ -95,24 +87,6 @@ public class OvenDALApplianceControlAdapter extends BaseApplianceControlDalAdapt
 	public void setCycle(Short cycle)  throws DeviceException{
 		execSingleWriteFunction(ApplianceControlServer.ATTR_CycleTarget0_NAME,cycle);		
 		
-	}
-
-	
-	public LevelData getTemperature() throws DeviceException {
-		LevelData temperature=null;
-		int result;
-		try {
-			result=getCluster().getTemperatureTarget0(appliancesProxy.getRequestContext(true));
-		} catch (Exception e) {
-			throw new DeviceException(e.getMessage(),e.getCause());
-		}
-		temperature=new LevelData(System.currentTimeMillis(), null, Units.DEGREE_CELSIUS, new BigDecimal(result));
-		return temperature;
-	}
-
-	
-	public void setTemperature(Integer temperature)  throws DeviceException {
-		execSingleWriteFunction(ApplianceControlServer.ATTR_TemperatureTarget0_NAME, temperature);
 	}
 
 	

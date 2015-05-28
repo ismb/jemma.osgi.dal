@@ -5,14 +5,17 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.energy_home.dal.functions.DishWasher;
 import org.energy_home.dal.functions.Fridge;
 import org.energy_home.dal.functions.Oven;
 import org.energy_home.dal.functions.WashingMachine;
 import org.energy_home.dal.functions.type.TimeAttribute;
 import org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer;
 import org.energy_home.jemma.ah.hac.IAppliance;
+import org.energy_home.jemma.ah.hac.lib.Appliance;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.osgi.dal.ClusterFunctionFactory;
+import org.energy_home.jemma.osgi.dal.impl.DishWasherDALApplianceControlAdapter;
 import org.energy_home.jemma.osgi.dal.impl.FridgeDALApplianceControlAdapter;
 import org.energy_home.jemma.osgi.dal.impl.OvenDALApplianceControlAdapter;
 import org.energy_home.jemma.osgi.dal.impl.TemperatureMeterDALAdapter;
@@ -30,14 +33,15 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 	Map<String,String> washingMachineAttributesMap;
 	Map<String,String> fridgeAttributesMap;
 	Map<String,String> ovenAttributesMap;
+	Map<String,String> dishWasherAttributesMap;
 	
-	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId,
 			IAppliancesProxy appliancesProxy) {
 
 		washingMachineAttributesMap=new HashMap<String, String>();
 		fridgeAttributesMap=new HashMap<String, String>();
 		ovenAttributesMap=new HashMap<String, String>();
+		dishWasherAttributesMap=new HashMap<String, String>();
 		
 		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_TemperatureTarget0_NAME, WashingMachine.PROPERTY_TEMPERATURE);
 		washingMachineAttributesMap.put(ApplianceControlServer.ATTR_CycleTarget0_NAME, WashingMachine.PROPERTY_CYCLE);
@@ -60,6 +64,11 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		ovenAttributesMap.put(ApplianceControlServer.ATTR_StartTime_NAME, Oven.PROPERTY_STARTTIME);
 		ovenAttributesMap.put(ApplianceControlServer.ATTR_FinishTime_NAME, Oven.PROPERTY_FINISHTIME);
 		ovenAttributesMap.put(ApplianceControlServer.ATTR_RemainingTime_NAME, Oven.PROPERTY_REMAININGTIME);
+
+		dishWasherAttributesMap.put(ApplianceControlServer.ATTR_CycleTarget0_NAME, Oven.PROPERTY_CYCLE);
+		dishWasherAttributesMap.put(ApplianceControlServer.ATTR_StartTime_NAME, Oven.PROPERTY_STARTTIME);
+		dishWasherAttributesMap.put(ApplianceControlServer.ATTR_FinishTime_NAME, Oven.PROPERTY_FINISHTIME);
+		dishWasherAttributesMap.put(ApplianceControlServer.ATTR_RemainingTime_NAME, Oven.PROPERTY_REMAININGTIME);
 		
 		ServiceRegistration reg=null;
 		Dictionary d=new Hashtable();
@@ -130,6 +139,26 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 						d);	
 				break;
 
+			case 46: //It's the dishWasher
+				d.put(Function.SERVICE_OPERATION_NAMES, new String[]{
+						"execStartCycle",
+						"execStopCycle",
+						"execOverloadPauseResume",
+						"execOverloadPause"
+				});
+				d.put(Function.SERVICE_PROPERTY_NAMES, new String[]{
+						Oven.PROPERTY_CYCLE,
+						Oven.PROPERTY_STARTTIME,
+						Oven.PROPERTY_FINISHTIME,
+						Oven.PROPERTY_REMAININGTIME,
+						Oven.PROPERTY_REMOTECONTROL
+						});
+				
+				reg=FrameworkUtil.getBundle(this.getClass()).getBundleContext().registerService(
+						new String[]{Function.class.getName(),DishWasher.class.getName()}, 
+						new DishWasherDALApplianceControlAdapter(appliance.getPid(), endPointId, appliancesProxy), 
+						d);	
+				break;
 			default: 
 				//unmanaged appliance
 				return null;
@@ -139,7 +168,6 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		return reg;
 	}
 
-	@Override
 	public String getFunctionUID(IAppliance appliance) {
 		
 		switch(getCategory(appliance))
@@ -150,6 +178,8 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "Oven");
 			case 39: //Fridge
 				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "Fridge");
+			case 46: //DishWasher
+				return IDConverters.getFunctionUid(appliance.getPid(),appliance.getConfiguration(), "DishWasher");
 			default: 
 				//unmanaged appliance
 				return null;
@@ -164,7 +194,6 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 		return cat;
 	}
 	
-	@Override
 	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		switch(getCategory(appliance))
 		{
@@ -174,13 +203,14 @@ public class WhiteGoodApplianceControlFactory implements ClusterFunctionFactory{
 				return ovenAttributesMap.get(attributeName);
 			case 39: //Fridge
 				return fridgeAttributesMap.get(attributeName);
+			case 46: //DishWasher
+				return dishWasherAttributesMap.get(attributeName);
 			default:
 				return null;
 		}
 		
 	}
 
-	@Override
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.eh.ApplianceControlServer";
 	}

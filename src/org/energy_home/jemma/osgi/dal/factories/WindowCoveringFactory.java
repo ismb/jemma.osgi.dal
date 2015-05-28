@@ -27,8 +27,6 @@ public class WindowCoveringFactory implements ClusterFunctionFactory {
 		propertiesMapping.put("CurrentPositionLiftPercentage",WindowCovering.PROPERTY_STATUS);
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		Dictionary d=new Hashtable();
 		
@@ -45,17 +43,14 @@ public class WindowCoveringFactory implements ClusterFunctionFactory {
 				d);		
 	}
 
-	@Override
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.closures.WindowCoveringServer";
 	}
 
-	@Override
 	public String getFunctionUID(IAppliance appliance) {
 		return IDConverters.getFunctionUid(appliance.getPid(), appliance.getConfiguration(),"WindowCovering");
 	}
 
-	@Override
 	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		return propertiesMapping.get(attributeName);
 	}

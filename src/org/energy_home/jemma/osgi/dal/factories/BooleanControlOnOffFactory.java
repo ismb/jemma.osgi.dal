@@ -28,7 +28,7 @@ public class BooleanControlOnOffFactory implements ClusterFunctionFactory {
 		propertiesMapping.put("OnOff",BooleanControl.PROPERTY_DATA);
 	}
 	
-	@Override
+	
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		Dictionary d=new Hashtable();
 		
@@ -46,17 +46,17 @@ public class BooleanControlOnOffFactory implements ClusterFunctionFactory {
 				d);		
 	}
 
-	@Override
+	
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.general.OnOffServer";
 	}
 
-	@Override
+	
 	public String getFunctionUID(IAppliance appliance) {
 		return IDConverters.getFunctionUid(appliance.getPid(), appliance.getConfiguration(),"OnOff");
 	}
 
-	@Override
+	
 	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		return propertiesMapping.get(attributeName);
 	}

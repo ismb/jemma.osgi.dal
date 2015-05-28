@@ -28,25 +28,24 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 		super(appliancePid,endPointId,appliancesProxy);
 	}
 
-	@Override
 	public PropertyMetadata getPropertyMetadata(String propertyName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public OperationMetadata getOperationMetadata(String operationName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public Object getServiceProperty(String propName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public BooleanData getData() throws DeviceException {
 		Boolean data = null;
 		try {
@@ -59,13 +58,13 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 		return new BooleanData(System.currentTimeMillis(), null, data);
 	}
 
-	@Override
+	
 	public void setData(boolean data) throws UnsupportedOperationException, IllegalStateException, DeviceException,
 			IllegalArgumentException {
 		throw new UnsupportedOperationException("Unimplemented method");
 	}
 
-	@Override
+	
 	public void reverse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		try {
 			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execToggle",
@@ -76,7 +75,7 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 
 	}
 
-	@Override
+	
 	public void setTrue() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		try {
 			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOn",
@@ -87,7 +86,7 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 
 	}
 
-	@Override
+	
 	public void setFalse() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		try {
 			this.appliancesProxy.invokeClusterMethod(appliancePid, endPointId, ONOFFCLUSTER, "execOff",
@@ -98,17 +97,12 @@ public class BooleanControlDALAdapter extends BaseDALAdapter implements BooleanC
 
 	}
 
-	@Override
+	
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue value) {
 		boolean v=(Boolean) value.getValue();
 		BooleanData data=new BooleanData(value.getTimestamp(), null, v);
 		return data;
 	}
 
-	@Override
-	public void updateApplianceSubscriptions() {
-		// TODO Auto-generated method stub
-		
-	}
 
 }

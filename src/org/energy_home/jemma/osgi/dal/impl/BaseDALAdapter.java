@@ -3,6 +3,7 @@ package org.energy_home.jemma.osgi.dal.impl;
 import org.energy_home.jemma.ah.hac.lib.ext.IAppliancesProxy;
 import org.energy_home.jemma.ah.hac.lib.ext.TextConverter;
 import org.energy_home.jemma.osgi.dal.ClusterDALAdapter;
+import org.osgi.service.dal.FunctionData;
 
 public abstract class BaseDALAdapter implements ClusterDALAdapter{
 
@@ -44,5 +45,8 @@ public abstract class BaseDALAdapter implements ClusterDALAdapter{
 		return objectParams;
 	}
 	
-	public abstract void updateApplianceSubscriptions();
+	//a empty implementation returning null for dal adapters not requiring 
+	public FunctionData getDataFromClusterNotification(String notificationPropertyName,Object value){
+		return null;
+	} 
 }

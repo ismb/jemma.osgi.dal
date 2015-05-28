@@ -33,7 +33,7 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		super(appliancePid, endPointId, appliancesProxy);
 	}
 	
-	@Override
+	
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue attributeValue) {
 		
 		FunctionData data=null;
@@ -77,29 +77,23 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		}
 		return data;
 	}
-
-	@Override
-	public void updateApplianceSubscriptions() {
-		
-	}
-
-	@Override
+	
 	public PropertyMetadata getPropertyMetadata(String propertyName) throws IllegalArgumentException {
 
 		return null;
 	}
 
-	@Override
+	
 	public OperationMetadata getOperationMetadata(String operationName) throws IllegalArgumentException {
 		return null;
 	}
 
-	@Override
+	
 	public Object getServiceProperty(String propName) {
 		return null;
 	}
 
-	@Override
+	
 	public LevelData getFridgeTemperature() throws DeviceException {
 		LevelData temperature=null;
 		int result;
@@ -112,7 +106,7 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		return temperature;
 	}
 	
-	@Override
+	
 	public LevelData getFreezerTemperature() throws DeviceException {
 		LevelData temperature=null;
 		int result;
@@ -127,7 +121,7 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		return temperature;
 	}
 
-	@Override
+	
 	public BooleanData getSuperCoolMode() throws DeviceException {
 		BooleanData superCoolMode=null;
 		Boolean result;
@@ -141,13 +135,13 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		return superCoolMode;
 	}
 
-	@Override
+	
 	public void setSuperCoolMode(Boolean data) throws DeviceException {
 		execSingleWriteFunction(Fridge.PROPERTY_SUPERCOOLMODE, data);
 		return ;
 	}
 
-	@Override
+	
 	public BooleanData getSuperFreezeMode() throws DeviceException {
 		BooleanData superFreezeMode=null;
 		Boolean result;
@@ -161,13 +155,13 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		return superFreezeMode;
 	}
 
-	@Override
+	
 	public void setSuperFreezeMode(Boolean data) throws DeviceException {
 		execSingleWriteFunction(Fridge.PROPERTY_SUPERFREEZE, data);
 		return ;
 	}
 
-	@Override
+	
 	public BooleanData getEcoMode() throws DeviceException {
 		BooleanData ecomode=null;
 		Boolean result;
@@ -181,13 +175,13 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		return ecomode;
 	}
 
-	@Override
+	
 	public void setEcoMode(Boolean data) throws DeviceException {
 		execSingleWriteFunction(Fridge.PROPERTY_ECOMODE, data);
 		return ;
 	}
 
-	@Override
+	
 	public BooleanData getIceParty() throws DeviceException {
 		BooleanData iceparty=null;
 		Boolean result;
@@ -201,13 +195,13 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		return iceparty;
 	}
 
-	@Override
+	
 	public void setIceParty(Boolean data) throws DeviceException {
 		execSingleWriteFunction(Fridge.PROPERTY_ICEPARTY, data);
 		return;
 	}
 
-	@Override
+	
 	public BooleanData getHolidayMode() throws DeviceException {
 		BooleanData holidayMode=null;
 		Boolean result;
@@ -221,7 +215,7 @@ public class FridgeDALApplianceControlAdapter extends BaseApplianceControlDalAda
 		return holidayMode;
 	}
 
-	@Override
+	
 	public void setHolidayMode(Boolean data) throws DeviceException {
 		execSingleWriteFunction(Fridge.PROPERTY_HOLIDAYMODE, data);
 		return ;

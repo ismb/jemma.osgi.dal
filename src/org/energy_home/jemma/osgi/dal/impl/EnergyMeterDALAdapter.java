@@ -16,8 +16,6 @@ import org.osgi.service.dal.Units;
 import org.osgi.service.dal.functions.Meter;
 import org.osgi.service.dal.functions.data.LevelData;
 
-import sun.util.LocaleServiceProviderPool.LocalizedObjectGetter;
-
 public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 
 	private Integer divisor=null;
@@ -30,19 +28,19 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 		super(appliancePid, endPointId, appliancesProxy);
 	}
 
-	@Override
+	
 	public PropertyMetadata getPropertyMetadata(String propertyName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public OperationMetadata getOperationMetadata(String operationName) throws IllegalArgumentException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
+	
 	public Object getServiceProperty(String propName) {
 		return properties.get(propName);
 	}
@@ -91,7 +89,7 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 		}
 	}
 	
-	@Override
+	
 	public LevelData getCurrent() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		BigDecimal result=null;
 		int instantaneousDemand;
@@ -110,7 +108,7 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 		return data;
 	}
 
-	@Override
+	
 	public LevelData getTotal() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		BigDecimal result=null;
 		long total;
@@ -146,13 +144,13 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 		return level;
 	}
 
-	@Override
+	
 	public void resetTotal() throws UnsupportedOperationException, IllegalStateException, DeviceException {
 		throw new UnsupportedOperationException("Unsupported operation");
 		
 	}
 
-	@Override
+	
 	public FunctionData getMatchingPropertyValue(String attributeName, IAttributeValue attributeValue) {
 		LevelData levelData=null;
 		try {
@@ -173,11 +171,6 @@ public class EnergyMeterDALAdapter extends BaseDALAdapter implements Meter{
 		return levelData;
 	}
 
-	@Override
-	public void updateApplianceSubscriptions() {
-		// TODO Auto-generated method stub
-		
-	}
 
 	public void setServiceProperties(Dictionary d) {
 		this.properties=d;

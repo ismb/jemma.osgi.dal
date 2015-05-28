@@ -29,7 +29,6 @@ public class PowerProfileFactory implements ClusterFunctionFactory {
 		propertiesMapping=new HashMap<String, String>();
 	}
 	
-	@Override
 	public ServiceRegistration createFunctionService(IAppliance appliance, Integer endPointId, IAppliancesProxy appliancesProxy) {
 		Dictionary d=new Hashtable();
 		
@@ -54,17 +53,14 @@ public class PowerProfileFactory implements ClusterFunctionFactory {
 				d);		
 	}
 
-	@Override
 	public String getMatchingCluster() {
 		return "org.energy_home.jemma.ah.cluster.zigbee.eh.PowerProfileServer";
 	}
 
-	@Override
 	public String getFunctionUID(IAppliance appliance) {
 		return IDConverters.getFunctionUid(appliance.getPid(), appliance.getConfiguration(),"PowerProfile");
 	}
 
-	@Override
 	public String getMatchingPropertyName(String attributeName,IAppliance appliance) {
 		return propertiesMapping.get(attributeName);
 	}

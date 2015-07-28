@@ -1,6 +1,6 @@
 # JEMMA adapter for Device Abstraction Layer
 
-**IMPORTANT NOTE**: this bundle has been deprecated in the transition towards jemma v1.0.0 and it's only kept for historical reasons. New developments have been moved to the ismb/jemma.osgi.dal.adapter project.
+**IMPORTANT NOTE**: this bundle has been deprecated in the transition towards jemma v1.0.0 and it's only kept for historical reasons. New developments have been moved to the [ismb/jemma.osgi.dal.adapter](https://github.com/ismb/jemma.osgi.dal.adapter) project.
 
 This bundle provides support for OSGi Device Abstraction Layer ( [rfc0196](https://github.com/osgi/design/tree/master/rfcs/rfc0196) and [rfc0210](https://github.com/osgi/design/tree/master/rfcs/rfc0210/) ) for these clusters:
 
